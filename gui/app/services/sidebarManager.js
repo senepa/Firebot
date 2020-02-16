@@ -126,6 +126,11 @@
                 .when("/quotes", {
                     templateUrl: "./templates/_quotes.html",
                     controller: "quotesController"
+                })
+
+                .when("/mixplay-sidebar", {
+                    templateUrl: "./templates/interactive/_mixplay-sidebar.html",
+                    controller: "mixplaySidebarController"
                 });
         }
     ]);

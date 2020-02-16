@@ -17,6 +17,7 @@
 
                         <nav-category name="{{'SIDEBAR.INTERACTIVE' | translate }}"></nav-category>
                         <nav-link page="Buttons" name="{{'SIDEBAR.INTERACTIVE.BUTTONS' | translate }}" icon="fa-gamepad" is-index="true"></nav-link>
+                        <nav-link page="MixPlay Sidebar" name="{{'SIDEBAR.INTERACTIVE.SIDEBAR' | translate }}" icon="fa-window-minimize fa-rotate-270" second-icon="fa-rectangle-landscape"></nav-link>
 
                         <nav-category name="{{'SIDEBAR.CHAT' | translate }}" pad-top="true"></nav-category>
                         <nav-link page="Commands" name="{{'SIDEBAR.CHAT.COMMANDS' | translate }}" icon="fa-exclamation"></nav-link>

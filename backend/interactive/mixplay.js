@@ -163,31 +163,35 @@ async function connectToMixplay() {
         return;
     }
 
-    if (!mixplayManager.hasProjects()) {
-        // no projects saved yet.
-        triggerMixplayDisconnect("Unable to connect to MixPlay as there are no MixPlay projects created. If you do not plan to use MixPlay for now, you can disable it from being controlled from the sidebar by openning the Connection Panel (click Connections in bottom left)");
-        return;
-    }
+    defaultSceneId = "default";
 
+    let mixplayModel;
+
+    // try to get active project and set it as the mixplay model
     let activeProjectId = settings.getActiveMixplayProjectId();
-
-    if (!activeProjectId || activeProjectId.length < 1) {
-        triggerMixplayDisconnect("You currently have no active project selected. Please select one via the project dropdown in the Controls tab.");
-        return;
+    if (mixplayManager.hasProjects() && activeProjectId != null && activeProjectId.length > 0) {
+        if (activeProjectId != null && activeProjectId.length > 0) {
+            let currentProject = mixplayManager.getProjectById(activeProjectId);
+            if (currentProject != null) {
+                mixplayModel = buildMixplayModalFromProject(currentProject);
+                mixplayManager.setConnectedProjectId(activeProjectId);
+                defaultSceneId = currentProject.defaultSceneId;
+            }
+        }
     }
 
-    let currentProject = mixplayManager.getProjectById(activeProjectId);
-    if (currentProject == null) {
-        triggerMixplayDisconnect("The project set as active doesn't appear to exist anymore. Please set or create a new one in the Controls tab.");
-        return;
+    // if model null we couldnt find an active project, so set to empty model
+    if (mixplayModel == null) {
+        mixplayModel = {
+            id: "firebot-empty-project",
+            defaultScene: { sceneID: "default", controls: []},
+            otherScenes: [],
+            groups: []
+        };
     }
 
     // clear our hidden controls cache, this is used in the update control effect
     hiddenControls = {};
-
-    let model = buildMixplayModalFromProject(currentProject);
-
-    mixplayManager.setConnectedProjectId(activeProjectId);
 
     try {
         //connect to mixplay
@@ -204,10 +208,10 @@ async function connectToMixplay() {
         await defaultScene.deleteAllControls();
 
         //create controls for default scene
-        await defaultScene.createControls(model.defaultScene.controls);
+        await defaultScene.createControls(mixplayModel.defaultScene.controls);
 
         //build other scenes
-        let scenesArrayData = { scenes: model.otherScenes };
+        let scenesArrayData = { scenes: mixplayModel.otherScenes };
         await mixplayClient.createScenes(scenesArrayData);
 
         //add control handlers
@@ -220,7 +224,7 @@ async function connectToMixplay() {
 
         //create groups for each scene
         let groups = [];
-        for (let scene of model.otherScenes) {
+        for (let scene of mixplayModel.otherScenes) {
             groups.push({
                 groupID: scene.sceneID,
                 sceneID: scene.sceneID
@@ -228,17 +232,25 @@ async function connectToMixplay() {
         }
         await mixplayClient.createGroups({ groups: groups });
 
+        await mixplayClient.updateWorld({
+            sidebar: {
+                enabled: true,
+                streamer: {
+                    username: streamer.username,
+                    userId: streamer.userId,
+                    channelId: streamer.channelId
+                }
+            }
+        });
+
         //mark as successfully connected
         mixplayClient.ready(true);
         renderWindow.webContents.send('connection', "Online");
         mixplayConnected = true;
 
-        defaultSceneId = currentProject.defaultSceneId;
-
         eventManager.triggerEvent("firebot", "mixplay-connected", {
             username: "Firebot"
         });
-
     } catch (error) {
         logger.warn("Failed to connect to MixPlay", error);
         triggerMixplayDisconnect("Failed to connect to MixPlay.");
