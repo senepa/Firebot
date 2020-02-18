@@ -11,6 +11,7 @@ const logger = require("../logwrapper");
 const util = require("../utility");
 const frontendCommunicator = require("../common/frontend-communicator");
 const userDatabase = require("../database/userDatabase");
+const activeMixplayUsers = require('../roles/role-managers/active-mixplay-users');
 
 const mixplayManager = require('./mixplay-project-manager');
 const mixplaySidebarManager = require('./mixplay-sidebar-manager');
@@ -253,6 +254,9 @@ async function connectToMixplay() {
         eventManager.triggerEvent("firebot", "mixplay-connected", {
             username: "Firebot"
         });
+
+        activeMixplayUsers.cycleActiveMixplayUsers();
+
     } catch (error) {
         logger.warn("Failed to connect to MixPlay", error);
         triggerMixplayDisconnect("Failed to connect to MixPlay.");
@@ -337,20 +341,26 @@ function moveAllViewersToScene(newSceneId) {
     }
 }
 
-function updateCooldownForControls(controlIds, cooldown) {
+async function updateCooldownForControls(controlIds, cooldown) {
+    let promises = [];
+
     for (let controlId of controlIds) {
         try {
             let control = mixplayClient.state.getControl(controlId);
             if (control) {
-                control.update({
-                    cooldown: cooldown
-                });
+                promises.push(
+                    control.update({
+                        cooldown: cooldown
+                    })
+                );
             }
         } catch (err) {
             // something weird happened
             logger.debug("Error when cooling down control", err);
         }
     }
+
+    return Promise.all(promises);
 }
 
 async function updateParticipantWithData(userId, data, participant = null) {
@@ -404,6 +414,14 @@ mixplayClient.state.on('participantJoin', async participant => {
         });
     }
 });
+
+function getConnectedUsernames() {
+    let participants = [...mixplayClient.state.getParticipants().values()];
+
+    return participants
+        .filter(p => p != null && !p.anonymous)
+        .map(p => p.username);
+}
 
 // checks if this sceneId is set as default and returns "default" if so,
 // otherwise it returns the original scene id
@@ -513,3 +531,5 @@ exports.moveAllViewersToScene = moveAllViewersToScene;
 exports.updateCooldownForControls = updateCooldownForControls;
 exports.updateParticipantWithData = updateParticipantWithData;
 exports.updateParticipantWithUserData = updateParticipantWithUserData;
+exports.getConnectedUsernames = getConnectedUsernames;
+

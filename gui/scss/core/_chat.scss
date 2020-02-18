@@ -67,7 +67,7 @@
             color:$usercolor;
         }
     }
-    &[role="Pro"]{
+    &[role="Pro"], &[role="Partner"], &[role="VerifiedPartner"]{
         color: $procolor;
         .chatUserAvatar img {
             border: 1px solid $procolor;
@@ -278,7 +278,7 @@
             border-color: $usercolor;
         }
     }
-    &[role="Pro"]{
+    &[role="Pro"], &[role="Partner"], &[role="VerifiedPartner"]{
         .user-name{
             color: $procolor;
         }
@@ -447,7 +447,7 @@
         &[role="User"]{
             color: $usercolor;
         }
-        &[role="Pro"]{
+        &[role="Pro"], &[role="Partner"], &[role="VerifiedPartner"]{
             color: $procolor;
         }
         &[role="Mod"], &[role="ChannelEditor"]{
