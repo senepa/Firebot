@@ -13,12 +13,14 @@ const frontendCommunicator = require("../common/frontend-communicator");
 const userDatabase = require("../database/userDatabase");
 
 const mixplayManager = require('./mixplay-project-manager');
+const mixplaySidebarManager = require('./mixplay-sidebar-manager');
 const eventManager = require("../live-events/EventManager");
 
 const controlManager = require("./control-manager");
 
 // Setup mixer Interactive and make it a global variable for use throughout the app.
 const interactive = require("@mixer/interactive-node");
+
 const ws = require('ws');
 
 interactive.setWebSocket(ws);
@@ -234,7 +236,7 @@ async function connectToMixplay() {
 
         await mixplayClient.updateWorld({
             sidebar: {
-                enabled: true,
+                settings: mixplaySidebarManager.getSidebarSettings(),
                 streamer: {
                     username: streamer.username,
                     userId: streamer.userId,
@@ -511,4 +513,3 @@ exports.moveAllViewersToScene = moveAllViewersToScene;
 exports.updateCooldownForControls = updateCooldownForControls;
 exports.updateParticipantWithData = updateParticipantWithData;
 exports.updateParticipantWithUserData = updateParticipantWithUserData;
-

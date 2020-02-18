@@ -561,6 +561,9 @@ function appOnReady() {
         const mixplayProjectManager = require("./backend/interactive/mixplay-project-manager");
         mixplayProjectManager.loadProjects();
 
+        const mixplaySidebarManager = require("./backend/interactive/mixplay-sidebar-manager");
+        mixplaySidebarManager.loadSidebarSettings();
+
         const eventsAccess = require("./backend/live-events/events-access");
         eventsAccess.loadEventsAndGroups();
 

@@ -56,12 +56,13 @@
             };
 
             service.fireEventAsync = function(type, data) {
-                return new Promise(resolve => {
+                let promise = new Promise(resolve => {
                     ipcRenderer.send(type, data);
                     ipcRenderer.once(type + ":reply", (_, eventData) => {
                         resolve(eventData);
                     });
                 });
+                return $q.when(promise);
             };
 
             service.fireEventSync = function(type, data) {
