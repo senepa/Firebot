@@ -1,21 +1,70 @@
-<div>
-    <div style="width: 50%; margin-bottom: 10px">
-        <div style="font-weight: 600;font-size: 24px;margin-right: 15px;">MixPlay Sidebar</div>
-        <div class="muted" style="margin-top: 5px;">The MixPlay sidebar sits to the right of your stream and gives viewers access to various features such as your stream schedule, stream rules, the ability to toggle closed captioning, and much more.</div>
-    </div>
-    
-    <div class="content-block" style="width: 50%;">
-        <div class="content-block-body" style="margin: 5px 15px;">
-            <div style="display: flex;align-items: center;justify-content: space-between;">
-                <div>
-                    <div style="font-size: 17px;margin-right: 15px;">Sidebar Enabled</div>
-                </div>
-                <div style="width: 150px; flex-shrink: 0;text-align: right;">
-                    <toggle-button toggle-model="sidebarSettings.enabled" on-toggle="saveSettings();" auto-update-value="true" font-size="40"></toggle-button>
-                </div> 
-            </div>        
+<div style="margin-top: 20px; margin-left: 20px;">
+    <div style="width: 570px;">
+        <div style="margin-bottom: 10px">
+            <div style="font-weight: 600;font-size: 24px;margin-right: 15px;">MixPlay Sidebar</div>
+            <div class="muted" style="margin-top: 5px;">The MixPlay sidebar sits to the right of your stream and gives viewers access to various features such as your stream schedule, stream rules, the ability to toggle closed captioning, and much more.</div>
+        </div>
+        
+        <div class="content-block" >
+            <div class="content-block-body" style="margin: 5px 15px;">
+                <div style="display: flex;align-items: center;justify-content: space-between;">
+                    <div>
+                        <div style="font-size: 17px;margin-right: 15px;">Sidebar Enabled</div>
+                    </div>
+                    <div style="width: 150px; flex-shrink: 0;text-align: right;">
+                        <toggle-button toggle-model="sidebarSettings.enabled" on-toggle="saveSettings();" auto-update-value="true" font-size="40"></toggle-button>
+                    </div> 
+                </div>        
+            </div>
         </div>
     </div>
+    <div ng-show="sidebarSettings.enabled" style="width: 570px;display: flex;">
+        <div style="display: flex; justify-content: center;margin-left:15px; margin-right: 25px;">
+            <div style="width: 3px; background: #43454A; height: 100%;"></div>
+        </div>
+        <div>
+            <div style="margin-top: 40px;">
+                <div style="margin-bottom: 10px">
+                    <div style="font-size: 22px;margin-right: 15px;">Stream Schedule</div>
+                    <div class="muted" style="margin-top: 5px;">Setup your stream schedule so your viewers know when you'll be live. Your viewers will automatically see stream start and end times in their own timezone.</div>
+                </div>
+                
+                <div class="content-block">
+                    <div class="content-block-body" style="margin: 5px 15px;">
+                        <div style="display: flex;align-items: center;justify-content: space-between;">
+                            <div>
+                                <div style="font-size: 17px;margin-right: 15px;">Stream Schedule</div>
+                            </div>
+                            <div style="width: 150px; flex-shrink: 0;text-align: right;">
+                                <toggle-button toggle-model="sidebarSettings.streamSchedule.enabled" on-toggle="saveSettings();" auto-update-value="true" font-size="40"></toggle-button>
+                            </div> 
+                        </div>
+                        
+                        <div>
+                            <table style="width:100%">
+                                <tr>
+                                  <th>Day</th>
+                                  <th>Stream Time</th>
+                                  <th>Stream Description</th>
+                                  <th></th>
+                                </tr>
+                                <tr>
+                                  <td>Jill</td>
+                                  <td>Smith</td>
+                                  <td>50</td>
+                                </tr>
+                                <tr>
+                                  <td>Eve</td>
+                                  <td>Jackson</td>
+                                  <td>94</td>
+                                </tr>
+                              </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> 
 </div>
 
 
