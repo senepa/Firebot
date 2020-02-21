@@ -7,13 +7,18 @@
                 enabled: true,
                 streamSchedule: {
                     enabled: true,
-                    weekly: {
+                    utcOffest: -6, //streamers utc offset, moment().utcOffset() / 60;
+                    days: {
                         monday: {
-                            timeType: "specific", //"specific" or "custom"
-                            startTime: "", //json date time, we will just always ignore the date part
-                            endTime: "", //json date time, we will just always ignore the date part
-                            customTime: "", //ie "Afternoon"
-                            description: "" //ie "MMO Mondays", "Viewer Game Day", etc
+                            type: "defined", //defined vs custom
+                            start: {
+                                hour: 19, // 0-23
+                                minutes: 30 // 0-59
+                            },
+                            end: {
+                                hour: 23,
+                                minutes: 0
+                            }
                         }
                     }
                 },
