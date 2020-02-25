@@ -4,16 +4,27 @@
     const moment = require("moment");
 
     /*
-        type: "defined", //defined vs custom
-        start: {
-            hour: 19, // 0-23
-            minutes: 30 // 0-59
-        },
-        end: {
-            hour: 23,
-            minutes: 0
-        }
-    */
+   {
+       streaming: true,
+       times: [ // array to support multiple streams in one day (ie morning and night streams) in the future
+           {
+                start: {
+                    type: "specific", //specific vs custom
+                    hour: 19, // 0-23
+                    minutes: 30 // 0-59
+                },
+                end: {
+                    type: "specific",
+                    hour: 23,
+                    minutes: 0
+                },
+                description: "MMO Mondays"
+            }
+        ]
+   }
+   */
+
+    //how to calc viewer time dif with streamer utc offset: x-(y), where x is viewer utc offset and y is streamer utc offset
 
     angular
         .module("firebotApp")
@@ -55,7 +66,17 @@
                 backendCommunicator.fireEvent("sidebar-settings-update", $scope.sidebarSettings);
             };
 
-            $scope.getWeekly;
+            $scope.days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+
+            $scope.getStreamTimeForDay = function(dayName) {
+                // todo: implement
+                return "";
+            };
+
+            $scope.getStreamDescriptionForDay = function(dayName) {
+                // todo: implement
+                return "";
+            };
 
         });
 }());
