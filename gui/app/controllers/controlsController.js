@@ -648,7 +648,6 @@
                 {
                     html: `<a href style="color: #fb7373;"><i class="far fa-trash-alt" style="margin-right: 10px;"></i> Delete</a>`,
                     click: function ($itemScope) {
-
                         let cooldownGroup = $itemScope.cooldownGroup;
                         $scope.showDeleteCooldownGroupModal(cooldownGroup);
                     }
