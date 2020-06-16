@@ -3,7 +3,6 @@
 const { ipcMain } = require("electron");
 const logger = require("../../logwrapper");
 const accountAccess = require("../../common/account-access");
-const mixerChat = require("../../common/mixer-chat");
 const util = require("../../utility");
 const moment = require("moment");
 const NodeCache = require("node-cache");
@@ -27,11 +26,16 @@ let handledMessageIds = [];
  * @param {string[]} args List of args the user provided with the command
  * @param {string} commandSender username of the person who issued the command
  */
-function UserCommand(trigger, args, commandSender) {
+function UserCommand(trigger, args, commandSender, senderRoles) {
     this.trigger = trigger;
     this.args = args;
     this.triggeredArg = null;
+    this.subcommandId = null;
     this.commandSender = commandSender;
+    if (!senderRoles) {
+        senderRoles = [];
+    }
+    this.senderRoles = senderRoles;
 }
 
 function buildCommandRegexStr(trigger, scanWholeMessage) {
@@ -153,7 +157,7 @@ function cooldownCommand(command, triggeredSubcmd, username) {
     }
 }
 
-function buildUserCommand(command, rawMessage, sender) {
+function buildUserCommand(command, rawMessage, sender, senderRoles) {
     let trigger = command.trigger,
         args = [],
         commandSender = sender;
@@ -172,7 +176,7 @@ function buildUserCommand(command, rawMessage, sender) {
 
     args = args.filter(a => a.trim() !== "");
 
-    return new UserCommand(trigger, args, commandSender);
+    return new UserCommand(trigger, args, commandSender, senderRoles);
 }
 
 function fireCommand(
@@ -194,9 +198,24 @@ function fireCommand(
         //get system command from manager
         let cmdDef = commandManager.getSystemCommandById(command.id);
 
+        let commandOptions = {};
+        if (command.options != null) {
+            for (let optionName of Object.keys(command.options)) {
+                let option = command.options[optionName];
+                if (option) {
+                    let value = option.value;
+                    if (value == null) {
+                        value = option.default;
+                    }
+                    commandOptions[optionName] = value;
+                }
+            }
+        }
+
         //call trigger event.
         cmdDef.onTriggerEvent({
             command: command,
+            commandOptions: commandOptions,
             userCommand: userCmd,
             chatEvent: chatEvent
         });
@@ -207,6 +226,8 @@ function fireCommand(
 }
 
 async function handleChatEvent(chatEvent) {
+
+    const chat = require("../chat");
 
     logger.debug("Checking for command in message...");
 
@@ -251,31 +272,39 @@ async function handleChatEvent(chatEvent) {
     }
 
     // build usercommand object
-    let userCmd = buildUserCommand(command, rawMessage, commandSender);
+    let userCmd = buildUserCommand(command, rawMessage, commandSender, chatEvent.user_roles);
 
     let triggeredSubcmd = null;
     if (!command.scanWholeMessage && userCmd.args.length > 0 && command.subCommands) {
         for (let subcmd of command.subCommands) {
-            if (subcmd.active && subcmd.arg.toLowerCase() === userCmd.args[0].toLowerCase()) {
-                triggeredSubcmd = subcmd;
-                userCmd.triggeredArg = subcmd.arg;
+            if (subcmd.active === false) continue;
+            if (subcmd.regex) {
+                let regex = new RegExp(`^${subcmd.arg}$`, "gi");
+                if (regex.test(userCmd.args[0])) {
+                    triggeredSubcmd = subcmd;
+                    userCmd.triggeredArg = subcmd.arg;
+                    userCmd.subcommandId = subcmd.id;
+                }
+            } else {
+                if (subcmd.arg.toLowerCase() === userCmd.args[0].toLowerCase()) {
+                    triggeredSubcmd = subcmd;
+                    userCmd.triggeredArg = subcmd.arg;
+                    userCmd.subcommandId = subcmd.id;
+                }
             }
         }
     }
 
     if (command.autoDeleteTrigger || (triggeredSubcmd && triggeredSubcmd.autoDeleteTrigger)) {
         logger.debug("Auto delete trigger is on, attempting to delete chat message");
-        mixerChat.deleteChat(chatEvent.id);
+        chat.deleteMessage(chatEvent.id);
     }
 
     // check if command meets min args requirement
     let minArgs = triggeredSubcmd ? triggeredSubcmd.minArgs || 0 : command.minArgs || 0;
     if (userCmd.args.length < minArgs) {
         let usage = triggeredSubcmd ? triggeredSubcmd.usage : command.usage;
-        mixerChat.smartSend(
-            `Invalid command. Usage: ${command.trigger} ${usage || ""}`,
-            commandSender
-        );
+        chat.sendChatMessage(`Invalid command. Usage: ${command.trigger} ${usage || ""}`, commandSender);
         return false;
     }
 
@@ -292,6 +321,7 @@ async function handleChatEvent(chatEvent) {
             type: TriggerType.COMMAND,
             metadata: {
                 username: commandSender,
+                userId: chatEvent.user_id,
                 userMixerRoles: chatEvent.user_roles,
                 command: command,
                 userCommand: userCmd,
@@ -309,7 +339,7 @@ async function handleChatEvent(chatEvent) {
                 reason = restrictionReason;
             }
             logger.debug(`${commandSender} could not use command '${command.trigger}' because: ${reason}`);
-            mixerChat.smartSend("You cannot use this command because: " + reason, commandSender);
+            chat.sendChatMessage("You cannot use this command because: " + reason, commandSender);
             return false;
         }
     }
@@ -324,7 +354,7 @@ async function handleChatEvent(chatEvent) {
 
     if (remainingCooldown > 0) {
         logger.debug("Command is still on cooldown, alerting viewer...");
-        mixerChat.smartSend(
+        chat.sendChatMessage(
             "This command is still on cooldown for: " +
         util.secondsForHumans(remainingCooldown),
             commandSender

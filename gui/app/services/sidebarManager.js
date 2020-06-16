@@ -126,6 +126,16 @@
                 .when("/quotes", {
                     templateUrl: "./templates/_quotes.html",
                     controller: "quotesController"
+                })
+
+                .when("/counters", {
+                    templateUrl: "./templates/_counters.html",
+                    controller: "countersController"
+                })
+
+                .when("/games", {
+                    templateUrl: "./templates/_games.html",
+                    controller: "gamesController"
                 });
         }
     ]);

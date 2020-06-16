@@ -1,13 +1,15 @@
 "use strict";
 
 const { ipcMain } = require("electron");
-const chat = require("../mixer-chat.js");
 const profileManager = require("../profile-manager");
 const logger = require("../../logwrapper");
 const replaceVariableManager = require("../../variables/replace-variable-manager");
 const emotesManager = require("../emotes-manager");
 const accountAccess = require("../account-access");
 const imgProbe = require('probe-image-size');
+const channelAccess = require("../channel-access");
+const mixerApi = require("../../mixer-api/api");
+const chat = require("../../chat/chat");
 
 // This will parse the message string and build an array of Arg numbers the user wants to use.
 function parseArg(str) {
@@ -90,15 +92,12 @@ async function textProcessor(effect, trigger, populateReplaceVars = true) {
         let message = effect.message;
         let chatter = effect.chatter;
         let whisper = effect.whisper;
-        let username = trigger.metadata.username;
         let messageArray = [];
 
         // Replace vars
         if (populateReplaceVars) {
             logger.debug("Populating string with replace vars...");
             try {
-                //message = await util.populateStringWithTriggerData(message, trigger);
-
                 message = await replaceVariableManager.evaluateText(message, trigger, { type: trigger.type });
             } catch (err) {
                 logger.error(err);
@@ -126,51 +125,54 @@ async function textProcessor(effect, trigger, populateReplaceVars = true) {
 
         switch (command) {
         case "/clear":
-            chat.clearChatMessages();
+            chat.clearChat();
             break;
         case "/giveaway":
-            chat.chatGiveaway();
+            chat.startGiveaway();
             break;
         case "/timeout": {
             logger.debug("timing out user " + target + " for " + arg2);
-            chat.timeout(target, arg2);
+            chat.timeoutUser(target, arg2);
             break;
         }
         case "/ban":
-            chat.changeUserRole(target, "Banned", "Add");
+            channelAccess.banUser(target);
             break;
         case "/unban":
-            chat.changeUserRole(target, "Banned", "Remove");
+            channelAccess.unbanUser(target);
             break;
         case "/mod":
-            chat.changeUserRole(target, "Mod", "Add");
+            channelAccess.modUser(target);
             break;
         case "/unmod":
-            chat.changeUserRole(target, "Mod", "Remove");
+            channelAccess.unmodUser(target);
             break;
         case "/purge":
-            chat.chatPurge(target);
+            chat.purgeUserMessages(target);
+            break;
+        case "/ad":
+            channelAccess.triggerAdBreak();
             break;
         case "/settitle": {
             messageArray.splice(0, 1);
             let title = messageArray.join(" ");
-            chat.updateStreamTitle(title);
+            channelAccess.setStreamTitle(title);
             break;
         }
         case "/setgame": {
             messageArray.splice(0, 1);
             let game = messageArray.join(" ");
-            chat.updateStreamGame(game);
+            channelAccess.setStreamGameByName(game);
             break;
         }
         case "/setaudience": {
             let normalizedArg = arg1 != null ? arg1.toLowerCase() : "";
             if (
                 normalizedArg === "family" ||
-          normalizedArg === "teen" ||
-          normalizedArg === "18+"
+                normalizedArg === "teen" ||
+                normalizedArg === "18+"
             ) {
-                chat.updateStreamAudience(normalizedArg);
+                channelAccess.setStreamerAudience(normalizedArg);
             }
             break;
         }
@@ -184,7 +186,7 @@ async function textProcessor(effect, trigger, populateReplaceVars = true) {
 
             try {
                 // Send to mixer.
-                chat.smartSend(messageArray.join(" "), whisper, chatter);
+                chat.sendChatMessage(messageArray.join(" "), whisper, chatter);
 
                 // Send to UI to inject outgoing whisper.
                 injectWhisper(chatter, whisper, messageArray.join(" "));
@@ -214,7 +216,7 @@ async function textProcessor(effect, trigger, populateReplaceVars = true) {
 
                 if (messageText.length > 0) {
 
-                    chat.smartSend(messageText, target, chatter);
+                    chat.sendChatMessage(messageText, target, chatter);
 
                     // Send to UI to inject outgoing whisper.
                     injectWhisper(chatter, target, messageText);
@@ -225,14 +227,10 @@ async function textProcessor(effect, trigger, populateReplaceVars = true) {
 
             break;
         default:
-        // Whispers and broadcasts
-        // This occurs if a whisper is sent via button chat effect, or if a regular chat message is sent via chat effect or chat window.
+            // Whispers and broadcasts
+            // This occurs if a whisper is sent via button chat effect, or if a regular chat message is sent via chat effect or chat window.
             logger.debug("attempting to send chat");
-            if (whisper != null && whisper !== "") {
-                whisper = whisper.replace("$(user)", username);
-            }
-
-            chat.smartSend(message, whisper, chatter);
+            chat.sendChatMessage(message, whisper, chatter);
         }
     } catch (err) {
         renderWindow.webContents.send(
@@ -425,24 +423,14 @@ async function uiChatMessage(data) {
 
 // Get Chat History
 // This grabs chat history for the channel. Useful on initial connection to grab pre-existing messages.
-function uiGetChatHistory(streamerClient) {
+async function uiGetChatHistory() {
     logger.info("Attempting to get chat history");
-    let dbAuth = profileManager.getJsonDbInProfile("/auth"),
-        streamer = dbAuth.getData("/streamer");
 
-    streamerClient
-        .request("GET", "chats/" + streamer["channelId"] + "/history")
-        .then(
-            messages => {
-                // Send to UI to show in chat window.
-                uiChatMessage(messages.body);
-                logger.info("Chat history successfully updated.");
-            },
-            function(err) {
-                logger.info("Error getting chat history.");
-                logger.error(err);
-            }
-        );
+    const historicalMessages = await mixerApi.chats.getHistory();
+
+    if (historicalMessages.length > 0) {
+        uiChatMessage(historicalMessages);
+    }
 }
 
 
@@ -453,7 +441,7 @@ async function uiChatUserRefresh() {
     let chatUsers;
 
     try {
-        chatUsers = await chat.getCurrentViewerListV2();
+        chatUsers = await channelAccess.getCurrentViewerList();
     } catch (err) {
         logger.warn(err);
         return;
@@ -469,44 +457,10 @@ async function uiChatUserRefresh() {
     logger.info('Chat userlist refreshed.');
 }
 
-// This will send a list of commands in a whipser to someone.
-function commandList(trigger) {
-    // Get commands
-    let dbCommands = chat.getCommandCache();
-    let activeCommands = dbCommands["Active"];
-    let commandArray = [];
-
-    let whisperTo = trigger.metadata.username;
-
-    // Loop through commands and let's put together a list.
-    for (let command in activeCommands) {
-        if (activeCommands.hasOwnProperty(command)) {
-            command = activeCommands[command];
-            let trigger = command["trigger"];
-
-            // Push each trigger to the command array.
-            commandArray.push(trigger);
-        }
-    }
-
-    // Let's split up the string into 275 character chunks.
-    // Note the actual limit is 360 characters, but we're doing 275 just to be on the safe side.
-    let commandString = "Commands: " + commandArray.join(', ');
-    let limit = 275;
-    let regex = new RegExp(`([^]{1,${limit}})(, |$)`, "g");
-    let out = commandString
-        .replace(regex, "|$1")
-        .slice(1)
-        .split("|");
-    let message = out.map(l => `${l}`);
-
-    // Alright, lets send off each packet.
-    for (let chunk in message) {
-        if (chunk != null && chunk.length > 0) {
-            chat.whisper("bot", whisperTo, message[chunk]);
-        }
-    }
-}
+chat.on("connected", async () => {
+    await uiGetChatHistory();
+    await uiChatUserRefresh();
+});
 
 // UI Chat Message Sent
 // This receives chat messages from the UI chat window.
@@ -525,4 +479,3 @@ exports.parseArg = parseArg;
 exports.uiChatMessage = uiChatMessage;
 exports.uiChatUserRefresh = uiChatUserRefresh;
 exports.uiGetChatHistory = uiGetChatHistory;
-exports.commandList = commandList;

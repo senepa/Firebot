@@ -1,5 +1,10 @@
 "use strict";
 
+const app = require('electron').app;
+
+const moment = require("moment");
+moment.locale(app.getLocale());
+
 /**
  * The Quotes Management
  */
@@ -16,7 +21,25 @@ const quotesManagement = {
             user: 0,
             global: 0
         },
+        baseCommandDescription: "Display a random quote",
+        options: {
+            quoteDisplayTemplate: {
+                type: "string",
+                title: "Quote Display Template",
+                description: "How quotes are displayed in chat.",
+                tip: "Variables: {id}, {text}, {author}, {game}, {date}",
+                default: `Quote {id}: "{text}" - @{author} [{game}] [{date}]`,
+                useTextArea: true
+            }
+        },
         subCommands: [
+            {
+                id: "quotelookup",
+                arg: "\\d+",
+                regex: true,
+                usage: "[quoteId]",
+                description: "Displays the quote with the given ID."
+            },
             {
                 arg: "add",
                 usage: "add [@username] [quoteText]",
@@ -106,21 +129,27 @@ const quotesManagement = {
         ]
     },
     /**
-   * When the command is triggered
-   */
+     * When the command is triggered
+     */
     onTriggerEvent: event => {
         return new Promise(async (resolve) => {
             const quotesManager = require("../../../quotes/quotes-manager");
             const logger = require("../../../logwrapper");
-            const Chat = require("../../../common/mixer-chat");
-            const accountAccess = require("../../../common/account-access");
-            const moment = require("moment");
+            const chat = require("../../chat");
+            const api = require("../../../mixer-api/api");
+
+            let { commandOptions } = event;
 
             let args = event.userCommand.args;
 
             const getFormattedQuoteString = (quote) => {
-                let prettyDate = moment(quote.createdAt).format("MM/DD/YYYY");
-                return `Quote ${quote._id}: "${quote.text}" - @${quote.originator} [${quote.game}] [${prettyDate}]`;
+                let prettyDate = moment(quote.createdAt).format('L');
+                return commandOptions.quoteDisplayTemplate
+                    .replace("{id}", quote._id)
+                    .replace("{text}", quote.text)
+                    .replace("{author}", quote.originator)
+                    .replace("{game}", quote.game)
+                    .replace("{date}", prettyDate);
             };
 
             if (args.length === 0) {
@@ -129,39 +158,57 @@ const quotesManagement = {
 
                 if (quote) {
                     let formattedQuote = getFormattedQuoteString(quote);
-                    Chat.smartSend(formattedQuote);
+                    chat.sendChatMessage(formattedQuote);
                     logger.debug('We pulled a quote by id: ' + formattedQuote);
                 } else {
-                    Chat.smartSend(`Could not find a random quote!`);
+                    chat.sendChatMessage(`Could not find a random quote!`);
                 }
                 return resolve();
             }
 
             let triggeredArg = args[0];
 
+            if (event.userCommand.subcommandId === "quotelookup") {
+                let quoteId = parseInt(triggeredArg);
+                const quote = await quotesManager.getQuote(quoteId);
+                if (quote) {
+                    let formattedQuote = getFormattedQuoteString(quote);
+                    chat.sendChatMessage(formattedQuote);
+                    logger.debug('We pulled a quote using an id: ' + formattedQuote);
+                } else {
+                    // If we get here, it's likely the command was used wrong. Tell the sender they done fucked up
+                    chat.sendChatMessage(
+                        `Sorry! We couldnt find a quote with that id.`,
+                        event.userCommand.commandSender
+                    );
+                }
+                return resolve();
+            }
+
             switch (triggeredArg) {
             case "add": {
                 if (args.length < 3) {
-                    Chat.smartSend(`Please provide some quote text!`, event.userCommand.commandSender);
+                    chat.sendChatMessage(`Please provide some quote text!`, event.userCommand.commandSender);
                     return resolve();
                 }
 
                 // Get stream info so we can get the game name.
-                let streamerData = accountAccess.getAccounts().streamer;
-                let streamGameData = await Chat.requestAsStreamer("GET", "channels/" + streamerData.channelId + "?fields=type");
-                let streamGame = streamGameData['body']['type']['name'] != null ? streamGameData['body']['type']['name'] : "Unknown game";
+                let streamerChannelData = await api.channels.getStreamersChannel();
+
+                let currentGameName = streamerChannelData.type && streamerChannelData.type.name ?
+                    streamerChannelData.type.name : "Unknown game";
 
                 let newQuote = {
                     text: args.slice(2, args.length).join(" "),
                     originator: args[1].replace(/@/g, ""),
                     creator: event.userCommand.commandSender,
-                    game: streamGame,
+                    game: currentGameName,
                     createdAt: moment().toISOString()
                 };
                 let newQuoteId = await quotesManager.addQuote(newQuote);
                 let newQuoteText = await quotesManager.getQuote(newQuoteId);
                 let formattedQuote = getFormattedQuoteString(newQuoteText);
-                Chat.smartSend(
+                chat.sendChatMessage(
                     `Added ${formattedQuote}`
                 );
                 logger.debug(`Quote #${newQuoteId} added!`);
@@ -171,12 +218,12 @@ const quotesManagement = {
                 let quoteId = parseInt(args[1]);
                 if (!isNaN(quoteId)) {
                     await quotesManager.removeQuote(quoteId);
-                    Chat.smartSend(`Quote ${quoteId} was removed.`);
+                    chat.sendChatMessage(`Quote ${quoteId} was removed.`);
                     logger.debug('A quote was removed: ' + quoteId);
                     return resolve();
                 }
 
-                Chat.smartSend(
+                chat.sendChatMessage(
                     `Sorry! Couldnt find a quote with that id number.`,
                     event.userCommand.commandSender
                 );
@@ -195,12 +242,12 @@ const quotesManagement = {
                 let binId = await cloudSync.syncProfileData(profileJSON);
 
                 if (binId == null) {
-                    Chat.smartSend(
+                    chat.sendChatMessage(
                         "There are no quotes to pull!",
                         event.userCommand.commandSender
                     );
                 } else {
-                    Chat.smartSend(
+                    chat.sendChatMessage(
                         `Here a list of quotes! https://crowbartools.com/tools/firebot/profile?id=${binId}`,
                         event.userCommand.commandSender
                     );
@@ -223,7 +270,7 @@ const quotesManagement = {
                     let formattedQuote = getFormattedQuoteString(quote);
 
                     // send to chat
-                    Chat.smartSend(formattedQuote);
+                    chat.sendChatMessage(formattedQuote);
 
                     // log (Maybe move this to the manager?)
                     logger.debug('We pulled a quote using an id: ' + formattedQuote);
@@ -231,7 +278,7 @@ const quotesManagement = {
                 // no matching quote found
                 } else {
 
-                    Chat.smartSend(
+                    chat.sendChatMessage(
                         `Sorry! We couldnt find a quote using those terms.`,
                         event.userCommand.commandSender
                     );
@@ -242,7 +289,7 @@ const quotesManagement = {
             }
             case "edittext": {
                 if (args.length < 3) {
-                    Chat.smartSend(
+                    chat.sendChatMessage(
                         `Invalid usage! ${event.userCommand.trigger} edittext [quoteId] [newText]`,
                         event.userCommand.commandSender
                     );
@@ -251,7 +298,7 @@ const quotesManagement = {
 
                 let quoteId = parseInt(args[1]);
                 if (isNaN(quoteId)) {
-                    Chat.smartSend(
+                    chat.sendChatMessage(
                         `Invalid Quote Id!`,
                         event.userCommand.commandSender
                     );
@@ -261,7 +308,7 @@ const quotesManagement = {
                 const quote = await quotesManager.getQuote(quoteId);
 
                 if (quote == null) {
-                    Chat.smartSend(
+                    chat.sendChatMessage(
                         `Cannot find quote with id ${quoteId}`,
                         event.userCommand.commandSender
                     );
@@ -274,7 +321,7 @@ const quotesManagement = {
                 try {
                     await quotesManager.updateQuote(quote);
                 } catch (err) {
-                    Chat.smartSend(
+                    chat.sendChatMessage(
                         `Failed to update quote ${quoteId}!`,
                         event.userCommand.commandSender
                     );
@@ -282,7 +329,7 @@ const quotesManagement = {
                 }
 
                 let formattedQuote = getFormattedQuoteString(quote);
-                Chat.smartSend(
+                chat.sendChatMessage(
                     `Edited ${formattedQuote}`
                 );
 
@@ -291,7 +338,7 @@ const quotesManagement = {
             }
             case "edituser": {
                 if (args.length < 3) {
-                    Chat.smartSend(
+                    chat.sendChatMessage(
                         `Invalid usage! ${event.userCommand.trigger} edituser [quoteId] [newUsername]`,
                         event.userCommand.commandSender
                     );
@@ -300,7 +347,7 @@ const quotesManagement = {
 
                 let quoteId = parseInt(args[1]);
                 if (isNaN(quoteId)) {
-                    Chat.smartSend(
+                    chat.sendChatMessage(
                         `Invalid Quote Id!`,
                         event.userCommand.commandSender
                     );
@@ -310,7 +357,7 @@ const quotesManagement = {
                 const quote = await quotesManager.getQuote(quoteId);
 
                 if (quote == null) {
-                    Chat.smartSend(
+                    chat.sendChatMessage(
                         `Cannot find quote with id ${quoteId}`,
                         event.userCommand.commandSender
                     );
@@ -323,7 +370,7 @@ const quotesManagement = {
                 try {
                     await quotesManager.updateQuote(quote);
                 } catch (err) {
-                    Chat.smartSend(
+                    chat.sendChatMessage(
                         `Failed to update quote ${quoteId}!`,
                         event.userCommand.commandSender
                     );
@@ -331,7 +378,7 @@ const quotesManagement = {
                 }
 
                 let formattedQuote = getFormattedQuoteString(quote);
-                Chat.smartSend(
+                chat.sendChatMessage(
                     `Edited ${formattedQuote}`
                 );
 
@@ -339,29 +386,12 @@ const quotesManagement = {
                 return resolve();
             }
             default: {
-                let quoteId = parseInt(triggeredArg);
-                if (!isNaN(quoteId)) {
-                    // Most likely a quote id, so go get the quote.
-                    const quote = await quotesManager.getQuote(quoteId);
-                    if (quote) {
-                        let formattedQuote = getFormattedQuoteString(quote);
-                        Chat.smartSend(formattedQuote);
-                        logger.debug('We pulled a quote using an id: ' + formattedQuote);
-                    } else {
-                        // If we get here, it's likely the command was used wrong. Tell the sender they done fucked up
-                        Chat.smartSend(
-                            `Sorry! We couldnt find a quote with that id. Please use a numbered id.`,
-                            event.userCommand.commandSender
-                        );
-                    }
-                    return resolve();
-                }
 
                 // Try getting a quote using word search.
                 const quote = await quotesManagement.getRandomQuoteByWord(triggeredArg);
                 if (quote) {
                     let formattedQuote = getFormattedQuoteString(quote);
-                    Chat.smartSend(
+                    chat.sendChatMessage(
                         formattedQuote
                     );
                     logger.debug('We pulled a quote using words: ' + formattedQuote);

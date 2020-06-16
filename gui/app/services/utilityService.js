@@ -198,9 +198,12 @@
                     size: "sm",
                     resolveObj: {
                         model: () => options.model,
+                        inputType: () => options.inputType,
                         label: () => options.label,
                         inputPlaceholder: () => options.inputPlaceholder,
                         saveText: () => options.saveText,
+                        useTextArea: () => options.useTextArea,
+                        descriptionText: () => options.descriptionText,
                         validationFn: () => options.validationFn,
                         validationText: () => options.validationText,
                         trigger: () => options.trigger,
@@ -697,7 +700,8 @@
 
                             // validate options
                             let errors = $scope.effectDefinition.optionsValidator(
-                                $scope.effect
+                                $scope.effect,
+                                $scope
                             );
 
                             if (errors != null && errors.length > 0) {

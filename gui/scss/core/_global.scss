@@ -56,6 +56,10 @@
     bottom: 36px;
     top: unset;
   }
+  &.under {
+    bottom: -307px;
+    top: unset;
+  }
 }
 
 .variables-btn {
@@ -1826,5 +1830,10 @@ thead th{
 
 .modal-open .appwrapper {
   filter: blur(0.7px);
+}
+
+.modal-open .modal {
+  overscroll-behavior: contain;
+  will-change: transform;
 }
 

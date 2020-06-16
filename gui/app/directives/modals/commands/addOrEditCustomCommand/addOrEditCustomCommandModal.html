@@ -48,6 +48,11 @@
                         ng-model="$ctrl.command.regexDescription" placeholder="This regex matches...">
                 </div>
             </eos-collapsable-panel>
+
+            <div class="input-group">
+                <span class="input-group-addon" id="basic-addon3">Description <tooltip text="'Displayed on the command list webpage'"></tooltip></span>
+                <input type="text" class="form-control" aria-describedby="basic-addon3" ng-model="$ctrl.command.description" placeholder="Enter description">
+            </div>
         </div>
 
         <div style="padding-bottom:1em">
@@ -76,9 +81,12 @@
             </div>
 
             <div>
-                <restrictions-list restriction-data="$ctrl.command.restrictionData" trigger="command"
-                    trigger-meta="$ctrl.triggerMeta">
-                    </restrictions-section>
+                <div style="margin-bottom: 20px;">
+                    <h3 style="margin-bottom: 5px;">Restrictions <span class="muted" style="padding-bottom: 4px;padding-left: 2px;font-size: 13px;font-family: 'Quicksand';">(Permissions, currency costs, and more)</span></h3>
+                    <restrictions-list restriction-data="$ctrl.command.restrictionData" trigger="command"
+                        trigger-meta="$ctrl.triggerMeta">
+                        </restrictions-list>
+                </div>             
             </div>
 
             <div class="other-settings" style="padding-bottom:1em">

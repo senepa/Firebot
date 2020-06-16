@@ -4,6 +4,7 @@ const authManager = require("./auth-manager");
 const apiAccess = require("../api-access");
 const channelAccess = require("../common/channel-access");
 const accountAccess = require("../common/account-access");
+const effectsManager = require("../effects/effectManager");
 
 
 const MIXER_CLIENT_ID = "eb2f0f37d57de659852af2f409e95889c868d9caf128e396";
@@ -25,7 +26,7 @@ const STREAMER_ACCOUNT_PROVIDER = {
         tokenPath: TOKEN_PATH,
         authorizePath: AUTHORIZE_PATH
     },
-    scopes: 'user:details:self interactive:robot:self chat:connect chat:chat chat:whisper chat:bypass_links chat:bypass_slowchat chat:bypass_catbot chat:bypass_filter chat:clear_messages chat:giveaway_start chat:poll_start chat:remove_message chat:timeout chat:view_deleted chat:purge channel:details:self channel:update:self channel:clip:create:self channel:follow:self'
+    scopes: 'user:details:self interactive:robot:self chat:connect chat:chat chat:whisper chat:bypass_links chat:bypass_slowchat chat:bypass_catbot chat:bypass_filter chat:clear_messages chat:giveaway_start chat:poll_start chat:remove_message chat:timeout chat:view_deleted chat:purge channel:details:self channel:update:self channel:clip:create:self channel:follow:self chat:ad_break'
 };
 
 const BOT_ACCOUNT_PROVIDER = {
@@ -64,14 +65,15 @@ authManager.on("auth-success", async authData => {
         };
 
         if (accountType === "streamer") {
-            accountObject.partnered = userData.channel.partnered;
+            const updatedStreamerAccount = await accountAccess.updateStreamerAccountSettings(accountObject);
+            if (updatedStreamerAccount != null) {
+                accountObject = updatedStreamerAccount;
+            }
+        }
 
-            let subBadgeUrl = await channelAccess.getChannelSubBadge(userData.username);
-            accountObject.subBadge = subBadgeUrl;
-
-            const clipGroups = ["Partner", "VerifiedPartner", "Staff", "Founder"];
-            let canClip = userData.groups.some(ug => clipGroups.some(cg => ug.name === cg));
-            accountObject.canClip = canClip;
+        let clipEffect = effectsManager.getEffectById("firebot:clip");
+        if (clipEffect) {
+            clipEffect.definition.hidden = !accountObject.canClip;
         }
 
         accountAccess.updateAccount(accountType, accountObject);

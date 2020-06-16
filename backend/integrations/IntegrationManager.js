@@ -8,6 +8,7 @@ const { shell } = require('electron');
 const { settings } = require('../common/settings-access');
 const frontEndCommunicator = require('../common/frontend-communicator');
 
+/**@extends {NodeJS.EventEmitter} */
 class IntegrationManager extends EventEmitter {
     constructor() {
         super();
@@ -16,8 +17,6 @@ class IntegrationManager extends EventEmitter {
     }
 
     registerIntegration(integration) {
-        // TODO: validate integration
-
         integration.definition.linked = false;
 
         if (integration.definition.linkType === "auth") {
@@ -26,9 +25,7 @@ class IntegrationManager extends EventEmitter {
 
         let integrationDb = profileManager.getJsonDbInProfile("/integrations");
         try {
-            let integrationSettings = integrationDb.getData(
-                `/${integration.definition.id}`
-            );
+            let integrationSettings = integrationDb.getData(`/${integration.definition.id}`);
             if (integrationSettings != null) {
                 integration.definition.settings = integrationSettings.settings;
                 integration.definition.linked = integrationSettings.linked !== false;
@@ -39,7 +36,9 @@ class IntegrationManager extends EventEmitter {
                 integration.definition.linked = false;
             }
         } catch (err) {
-            logger.warn(err);
+            if (err.name !== "DataError") {
+                logger.warn(err);
+            }
         }
 
         integration.integration.init(
@@ -62,6 +61,7 @@ class IntegrationManager extends EventEmitter {
                 id: id,
                 connected: true
             });
+            this.emit("integration-connected", id);
             logger.info(`Successfully connected to ${id}`);
         });
         integration.integration.on("disconnected", id => {
@@ -69,6 +69,7 @@ class IntegrationManager extends EventEmitter {
                 id: id,
                 connected: false
             });
+            this.emit("integration-disconnected", id);
             logger.info(`Disconnected from ${id}`);
         });
         integration.integration.on("settings-update", (id, settings) => {
@@ -168,7 +169,10 @@ class IntegrationManager extends EventEmitter {
         let int = this.getIntegrationById(integrationId);
         if (int == null || !int.definition.linked) return;
 
+        this.disconnectIntegration(int);
+
         try {
+            int.integration.unlink();
             let integrationDb = profileManager.getJsonDbInProfile("/integrations");
             integrationDb.delete(`/${integrationId}`);
             int.definition.settings = null;
@@ -180,11 +184,16 @@ class IntegrationManager extends EventEmitter {
         }
 
         renderWindow.webContents.send("integrationsUpdated");
+
+        frontEndCommunicator.send("integrationUnlinked", integrationId);
     }
 
     async connectIntegration(integrationId) {
         let int = this.getIntegrationById(integrationId);
-        if (int == null || !int.definition.linked) return;
+        if (int == null || !int.definition.linked) {
+            this.emit("integration-disconnected", integrationId);
+            return;
+        }
 
         let integrationData = {
             settings: int.definition.settings
@@ -206,7 +215,7 @@ class IntegrationManager extends EventEmitter {
                     });
 
                     logger.info(`Disconnected from ${int.definition.name}`);
-
+                    this.emit("integration-disconnected", integrationId);
                     return;
                 }
 

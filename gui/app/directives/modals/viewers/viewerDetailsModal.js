@@ -1,7 +1,9 @@
 "use strict";
 (function() {
 
+    const electron = require("electron");
     const moment = require("moment");
+    moment.locale(electron.remote.app.getLocale());
 
     angular
         .module("firebotApp")
@@ -11,7 +13,13 @@
                 <button type="button" class="close" style="font-size: 45px;font-weight: 100;position: absolute;top: 2px;right: 10px;z-index: 100000;" ng-click="$ctrl.dismiss()"><span>&times;</span></button>
             </div>
             <div class="modal-body">              
-                <div ng-show="$ctrl.loading">Loading...</div>
+                <div ng-show="$ctrl.loading" style="height: 464px;display: flex;align-items: center;justify-content: center;">
+                    <div class="bubble-spinner">
+                        <div class="bounce1"></div>
+                        <div class="bounce2"></div>
+                        <div class="bounce3"></div>
+                    </div>
+                </div>
                 <div ng-if="!$ctrl.loading">
                     <img ng-src="https://mixer.com/api/v1/users/{{$ctrl.viewerDetails.mixerData.id}}/avatar" 
                         style="width: 200px;height: 200px;border-radius: 200px;position: absolute;left: -50px;top: -50px;"/>
@@ -178,7 +186,7 @@
                     let followDateDisplay = null;
                     if (userFollowsStreamer) {
                         let date = relationshipData.follows.createdAt;
-                        followDateDisplay = moment(date).format("MM/DD/YYYY");
+                        followDateDisplay = moment(date).format("L");
                     }
 
                     const combined = mixerRoles.concat(channelRoles).map(r => mapMixerRole(r));
@@ -474,7 +482,7 @@
                         "fa-sign-in",
                         joinDate,
                         value => {
-                            return value ? moment(value).format("MM/DD/YYYY") : "Not saved";
+                            return value ? moment(value).format("L") : "Not saved";
                         },
                         "joinDate",
                         "date",
@@ -492,7 +500,7 @@
                         "fa-eye",
                         lastSeen,
                         value => {
-                            return value ? moment(value).format("MM/DD/YYYY") : "Not saved";
+                            return value ? moment(value).format("L") : "Not saved";
                         },
                         "lastSeen",
                         "date",

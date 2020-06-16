@@ -4,7 +4,7 @@ const { ipcMain } = require("electron");
 const settings = require("../../common/settings-access").settings;
 const logger = require("../../logwrapper");
 const userDatabase = require("../../database/userDatabase");
-const Chat = require("../../common/mixer-chat");
+const chat = require("../../chat/chat");
 
 // Active user toggle
 let activeUserListStatus = settings.getActiveChatUserListEnabled();
@@ -66,12 +66,20 @@ function clearInactiveChatters() {
     activeChatters = activeChatters.filter(u => u != null && u.time >= expiredTime);
 }
 
+async function removeUserFromList(removedUser) {
+    activeChatters = activeChatters.filter(u => u != null && u.username !== removedUser.user_name);
+}
+
+async function clearList() {
+    activeChatters = [];
+}
+
 function getActiveChatters() {
     return activeChatters;
 }
 
 function cycleActiveChatters() {
-    let chatConnected = Chat.getChatStatus();
+    let chatConnected = chat.chatIsConnected();
     if (!chatConnected) {
         return;
     }
@@ -117,3 +125,5 @@ exports.getActiveChatters = getActiveChatters;
 exports.addOrUpdateActiveChatter = addOrUpdateActiveChatter;
 exports.cycleActiveChatters = cycleActiveChatters;
 exports.isUsernameActiveChatter = isUsernameActiveChatter;
+exports.removeUserFromList = removeUserFromList;
+exports.clearList = clearList;

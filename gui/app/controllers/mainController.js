@@ -6,6 +6,7 @@
     const profileManager = require("../../backend/common/profile-manager");
 
     const moment = require("moment");
+    moment.locale(electron.remote.app.getLocale());
 
     agGrid.initialiseAgGridWithAngular1(angular); // eslint-disable-line no-undef
 
@@ -99,7 +100,9 @@
         viewersService,
         chatModerationService,
         ttsService,
-        settingsService
+        settingsService,
+        countersService,
+        gamesService
     ) {
         // 'chatMessagesService' is included so its instantiated on app start
 
@@ -117,6 +120,10 @@
         viewersService.updateViewers();
 
         chatModerationService.loadChatModerationData();
+
+        countersService.loadCounters();
+
+        gamesService.loadGames();
 
         //start notification check
         $timeout(() => {
@@ -441,7 +448,7 @@
 
     app.filter('prettyDate', function() {
         return function(input) {
-            return (input) ? moment(input).format("MM/DD/YYYY") : 'Not saved';
+            return (input) ? moment(input).format('L') : 'Not saved';
         };
     });
 
