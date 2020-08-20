@@ -1,7 +1,5 @@
 "use strict";
 
-const { indexOf } = require("angular-route");
-
 (function () {
     angular
         .module("firebotApp")

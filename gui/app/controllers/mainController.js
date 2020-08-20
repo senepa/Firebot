@@ -103,7 +103,7 @@
         settingsService,
         countersService,
         gamesService,
-        giveawayService,
+        giveawaysService,
         presetEffectListsService
     ) {
         // 'chatMessagesService' is included so its instantiated on app start
