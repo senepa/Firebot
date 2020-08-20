@@ -10,7 +10,7 @@ module.exports = {
     name: "Raffle",
     subtitle: "Make someone a winner using currency",
     description: "This game starts a raffle by using a currency. Users with more currency will have a higher chance of winning.",
-    icon: "fa-sack-dollar",
+    icon: "fa-dice-three",
     settingCategories: {
         manualSettings: {
             title: "Manual Raffle Settings",
@@ -25,6 +25,44 @@ module.exports = {
                     sortRank: 1,
                     validation: {
                         min: 1
+                    }
+                },
+                startMessage: {
+                    type: "string",
+                    title: "Raffle Started",
+                    description: "Sent when the manual raffle has started.",
+                    useTextArea: true,
+                    default: "A raffle has begun! Type !enter to join the raffle.",
+                    validation: {
+                        required: true
+                    }
+                },
+                entryMessages: {
+                    title: "Entry Messages",
+                    sortRank: 2,
+                    settings: {
+                        onJoin: {
+                            type: "string",
+                            title: "On Join",
+                            useTextArea: true,
+                            default: "{user} has joined the raffle!",
+                            tip: "Available variables: {user}",
+                            sortRank: 1,
+                            validation: {
+                                required: true
+                            }
+                        },
+                        alreadyJoined: {
+                            type: "string",
+                            title: "Already Joined",
+                            useTextArea: true,
+                            default: "{user}, you've already joined the raffle!",
+                            tip: "Available variables: {user}",
+                            sortRank: 2,
+                            validation: {
+                                required: true
+                            }
+                        }
                     }
                 }
             }
@@ -42,16 +80,36 @@ module.exports = {
                         required: true
                     }
                 },
-                announcementDelay: {
+                startDelay: {
                     type: "number",
                     title: "Start Delay (secs)",
-                    description: "The delay time before the raffle announces a winner.",
+                    description: "The delay time until the raffle announces a winner.",
                     placeholder: "Enter secs",
                     default: 10,
                     sortRank: 2,
                     validation: {
                         min: 1
                     }
+                },
+                startMessage: {
+                    type: "string",
+                    title: "Raffle Started",
+                    description: "Sent when the currency raffle has started.",
+                    useTextArea: true,
+                    default: "A raffle has begun!",
+                    validation: {
+                        required: true
+                    }
+                }
+            }
+        },
+        chatSettings: {
+            title: "Chat Settings",
+            sortRank: 3,
+            settings: {
+                chatter: {
+                    type: "chatter-select",
+                    title: "Chat As"
                 }
             }
         }

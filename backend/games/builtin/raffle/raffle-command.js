@@ -181,7 +181,7 @@ const raffleCommand = {
             // After timeLimit is reached, a winner is randomly selected from the list of entered users.
             if (event.userCommand.subcommandId === "raffleManual") {
 
-                let timeLimit = raffleSettings.settings.manualSettings.timeLimit * 60000;
+                let timeLimit = raffleSettings.settings.manualSettings.startDelay * 60000;
 
                 activeRaffleInfo = {
                     "active": true
@@ -197,7 +197,7 @@ const raffleCommand = {
                 // When the winning number hits 0, that user is selected as the winner and announced to chat
             } else if (event.userCommand.subcommandId === "raffleCurrency") {
 
-                let timeLimit = raffleSettings.settings.currencySettings.timeLimit * 60000;
+                let timeLimit = raffleSettings.settings.currencySettings.startDelay * 60000;
 
                 activeRaffleInfo = {
                     "active": true
@@ -209,6 +209,19 @@ const raffleCommand = {
 
             }
 
+
+            if (!raffleRunner.lobbyOpen) {
+
+                const startDelay = raffleSettings.settings.generalSettings.startDelay || 1;
+                raffleRunner.triggerLobbyStart(startDelay);
+
+                const teamCreationMessage = heistSettings.settings.generalMessages.teamCreation
+                    .replace("{user}", username)
+                    .replace("{command}", userCommand.trigger)
+                    .replace("{requiredUsers}", heistSettings.settings.generalSettings.minimumUsers);
+
+                twitchChat.sendChatMessage(teamCreationMessage, null, chatter);
+            }
 
             // raffleStop stops a manual raffle early
         } else if (event.userCommand.subcommandId === "raffleStop") {
