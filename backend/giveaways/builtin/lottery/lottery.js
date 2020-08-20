@@ -1,6 +1,6 @@
 "use strict";
 
-const raffleCommand = require("./raffle-command");
+const raffleCommand = require("./lottery-command");
 
 /**
  * @type {import('../../game-manager').FirebotGame}
