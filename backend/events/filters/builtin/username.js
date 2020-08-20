@@ -7,30 +7,21 @@ module.exports = {
     name: "Username",
     description: "Filter to a specific username",
     events: [
-        { eventSourceId: "mixer", eventId: "chat-message" },
-        { eventSourceId: "mixer", eventId: "subscribed" },
-        { eventSourceId: "mixer", eventId: "resub" },
-        { eventSourceId: "mixer", eventId: "hosted" },
-        { eventSourceId: "mixer", eventId: "followed" },
-        { eventSourceId: "mixer", eventId: "user-joined-mixplay" },
-        { eventSourceId: "mixer", eventId: "user-joined-chat" },
-        { eventSourceId: "mixer", eventId: "user-left-chat" },
-        { eventSourceId: "mixer", eventId: "messages-purged" },
-        { eventSourceId: "mixer", eventId: "user-banned" },
-        { eventSourceId: "mixer", eventId: "skill" },
-        { eventSourceId: "mixer", eventId: "viewer-arrived" },
-        { eventSourceId: "mixer", eventId: "subscription-gifted" },
-        { eventSourceId: "mixer", eventId: "progression-levelup" },
+        { eventSourceId: "twitch", eventId: "cheer" },
+        { eventSourceId: "twitch", eventId: "subs-gifted" },
+        { eventSourceId: "twitch", eventId: "sub" },
+        { eventSourceId: "twitch", eventId: "follow" },
+        { eventSourceId: "twitch", eventId: "raid" },
+        { eventSourceId: "twitch", eventId: "host" },
+        { eventSourceId: "twitch", eventId: "viewer-arrived" },
+        { eventSourceId: "twitch", eventId: "community-subs-gifted" },
+        { eventSourceId: "twitch", eventId: "channel-reward-redemption" },
+        { eventSourceId: "twitch", eventId: "viewer-arrived" },
         { eventSourceId: "streamloots", eventId: "purchase" },
         { eventSourceId: "streamloots", eventId: "redemption" }
     ],
     comparisonTypes: [ComparisonType.IS, ComparisonType.IS_NOT, ComparisonType.CONTAINS, ComparisonType.MATCHES_REGEX],
     valueType: "text",
-    /*presetValues: () => {
-        return new Promise(resolve => {
-            return [{value: 1, display: "one"}];
-        });
-    },*/
     predicate: (filterSettings, eventData) => {
 
         let { comparisonType, value } = filterSettings;

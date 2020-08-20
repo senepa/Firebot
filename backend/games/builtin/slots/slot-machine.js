@@ -1,5 +1,5 @@
 "use strict";
-const chat = require("../../../chat/chat");
+const twitchChat = require("../../../chat/twitch-chat");
 const util = require("../../../utility");
 
 const SPIN_COUNT = 3;
@@ -19,11 +19,11 @@ async function spin(username, successChance, chatter) {
 
     let successCount = 0;
 
-    chat.sendChatMessage(`${username} pulls back the lever...`, null, chatter);
+    twitchChat.sendChatMessage(`${username} pulls back the lever...`, null, chatter);
 
     for (let currentSpin = 1; currentSpin <= SPIN_COUNT; currentSpin++) {
 
-        await util.wait(1750);
+        await util.wait(750);
 
         const successfulRoll = util.getRandomInt(1, 100) <= successChance;
 
@@ -31,10 +31,8 @@ async function spin(username, successChance, chatter) {
             successCount++;
         }
 
-        chat.sendChatMessage(`${getSpinLabel(currentSpin)} reel stops, it's a ${successfulRoll ? 'HIT' : 'MISS'}`, username, chatter);
+        //twitchChat.sendChatMessage(`${getSpinLabel(currentSpin)} reel stops, it's a ${successfulRoll ? 'HIT' : 'MISS'}`, username, chatter);
     }
-
-    await util.wait(750);
 
     return successCount;
 }

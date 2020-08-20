@@ -68,6 +68,13 @@
                 <input class="form-control" type="number" min="0" placeholder="secs"
                     ng-model="$ctrl.command.cooldown.user">
             </div>
+
+            <div style="margin-top: 5px;" ng-show="$ctrl.command.cooldown.global > 0 || $ctrl.command.cooldown.user > 0">
+                <label class="control-fb control--checkbox"> Send chat message when on cooldown
+                    <input type="checkbox" ng-model="$ctrl.command.sendCooldownMessage">
+                    <div class="control__indicator"></div>
+                </label>
+            </div>
         </div>
 
         <div style="padding-bottom:1em">
@@ -89,6 +96,11 @@
                 </div>             
             </div>
 
+            <div class="effect-setting-container" style="padding-bottom:1em" ng-show="$ctrl.allSortTags != null && $ctrl.allSortTags.length > 0">
+                <h3>Sort Tags</h3>
+                <sort-tag-list current-tag-ids="$ctrl.command.sortTags" all-tags="$ctrl.allSortTags"></sort-tag-list>
+            </div>
+
             <div class="other-settings" style="padding-bottom:1em">
                 <div class="settings-title">
                     <h3>Settings</h3>
@@ -99,15 +111,9 @@
                         <div class="control__indicator"></div>
                     </label>
                     <!--<label class="control-fb control--checkbox">Show In Chat Feed <tooltip text="'Whether or not you want to see an alert in the chat feed when someone uses this command'"></tooltip>
-                    <input type="checkbox" ng-model="$ctrl.command.chatFeedAlert" aria-label="...">
-                    <div class="control__indicator"></div>
-                </label>-->
-                    <label class="control-fb control--checkbox">Allow in Costream Channels <tooltip
-                            text="'Allow this command to be used by anyone in a costream chat. If unchecked only viewers in your channel can use this command.'">
-                        </tooltip>
-                        <input type="checkbox" ng-model="$ctrl.command.allowInCostreams" aria-label="...">
+                        <input type="checkbox" ng-model="$ctrl.command.chatFeedAlert" aria-label="...">
                         <div class="control__indicator"></div>
-                    </label>
+                    </label>-->
                     <label class="control-fb control--checkbox">Hidden <tooltip
                             text="'Hide this command from the !commands list'"></tooltip>
                         <input type="checkbox" ng-model="$ctrl.command.hidden" aria-label="...">
@@ -116,6 +122,11 @@
                     <label class="control-fb control--checkbox">Ignore Bot Account <tooltip
                         text="'Whether or not the bot account should be able to trigger this command.'"></tooltip>
                         <input type="checkbox" ng-model="$ctrl.command.ignoreBot" aria-label="...">
+                        <div class="control__indicator"></div>
+                    </label>
+                    <label class="control-fb control--checkbox">Ignore Streamer Account <tooltip
+                        text="'Whether or not the streamer account should be able to trigger this command.'"></tooltip>
+                        <input type="checkbox" ng-model="$ctrl.command.ignoreStreamer" aria-label="...">
                         <div class="control__indicator"></div>
                     </label>
                 </div>

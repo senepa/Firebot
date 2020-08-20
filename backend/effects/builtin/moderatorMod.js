@@ -7,7 +7,8 @@ const { EffectTrigger, EffectDependency} = effectModels;
 const { EffectCategory } = require('../../../shared/effect-constants');
 
 const logger = require('../../logwrapper');
-const channelAccess = require("../../common/channel-access");
+
+const twitchChat = require("../../chat/twitch-chat");
 
 const model = {
     definition: {
@@ -59,13 +60,11 @@ const model = {
     },
     onTriggerEvent: async event => {
         if (event.effect.action === "Mod") {
-            channelAccess.modUser(event.effect.username);
+            await twitchChat.mod(event.effect.username);
             logger.debug(event.effect.username + " was modded via the mod effect.");
-        }
-
-        if (event.effect.action === "Unmod") {
-            channelAccess.unmodUser(event.effect.username);
-            logger.debug(event.effect.username + " was modded via the mod effect.");
+        } else if (event.effect.action === "Unmod") {
+            await twitchChat.unmod(event.effect.username);
+            logger.debug(event.effect.username + " was unmodded via the mod effect.");
         }
 
         return true;

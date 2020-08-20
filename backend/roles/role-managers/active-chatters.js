@@ -3,9 +3,6 @@
 const { ipcMain } = require("electron");
 const settings = require("../../common/settings-access").settings;
 const logger = require("../../logwrapper");
-const userDatabase = require("../../database/userDatabase");
-const chat = require("../../chat/chat");
-
 // Active user toggle
 let activeUserListStatus = settings.getActiveChatUserListEnabled();
 
@@ -17,21 +14,21 @@ let inactiveTimer = userInactiveTimeSetting * 60000;
 let cycleActiveTimer = [];
 let activeChatters = [];
 
-function isUsernameActiveChatter(username) {
-    let existingUserIndex = activeChatters.findIndex((obj => obj.username === username));
-    if (existingUserIndex !== -1) {
-        return true;
-    }
-    return false;
+function isUsernameActiveChatter(username = "") {
+    const expiredTime = new Date().getTime() - inactiveTimer;
+    return activeChatters.some(c => c.username.toLowerCase() === username.toLowerCase()
+        && c.time >= expiredTime);
 }
 
-async function addOrUpdateActiveChatter(user) {
+async function addOrUpdateActiveChatter(userId, username = "") {
     if (!activeUserListStatus) {
         return;
     }
 
+    const userDatabase = require("../../database/userDatabase");
+
     // Stop early if user shouldn't be in active chatter list.
-    let firebotUser = await userDatabase.getUserByUsername(user.user_name);
+    let firebotUser = await userDatabase.getUserByUsername(username);
     if (firebotUser && firebotUser.disableActiveUserList) {
         logger.debug(firebotUser.username + " is set to not join the active viewer list.");
         return;
@@ -41,20 +38,20 @@ async function addOrUpdateActiveChatter(user) {
     let date = new Date;
     let currentTime = date.getTime();
 
-    let existingUserIndex = activeChatters.findIndex(obj => obj.userId === user.user_id);
+    let existingUserIndex = activeChatters.findIndex(obj => obj.userId === userId);
 
     // If user exists, update their time and stop.
     if (existingUserIndex !== -1) {
-        logger.debug(user.user_name + " is still active in chat. Updating their time.");
+        logger.debug(username + " is still active in chat. Updating their time.");
         activeChatters[existingUserIndex].time = currentTime;
         return;
     }
 
     // Else, we're going to push the new user to the active chatter array.
-    logger.debug(user.user_name + " has become active in chat. Adding them to active chatter list.");
-    user = {
-        userId: user.user_id,
-        username: user.user_name,
+    logger.debug(username + " has become active in chat. Adding them to active chatter list.");
+    const user = {
+        userId: userId,
+        username: username,
         time: currentTime
     };
     activeChatters.push(user);
@@ -66,8 +63,8 @@ function clearInactiveChatters() {
     activeChatters = activeChatters.filter(u => u != null && u.time >= expiredTime);
 }
 
-async function removeUserFromList(removedUser) {
-    activeChatters = activeChatters.filter(u => u != null && u.username !== removedUser.user_name);
+async function removeUserFromList(userId) {
+    activeChatters = activeChatters.filter(u => u != null && u.userId !== userId);
 }
 
 async function clearList() {
@@ -79,7 +76,8 @@ function getActiveChatters() {
 }
 
 function cycleActiveChatters() {
-    let chatConnected = chat.chatIsConnected();
+    const twitchChat = require("../../chat/twitch-chat");
+    let chatConnected = twitchChat.chatIsConnected();
     if (!chatConnected) {
         return;
     }

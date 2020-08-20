@@ -6,9 +6,8 @@ const { EffectTrigger } = effectModels;
 const { EffectCategory } = require('../../../shared/effect-constants');
 
 const logger = require('../../logwrapper');
-const channelAccess = require('../../common/channel-access');
+const twitchApi = require("../../twitch-api/api");
 const activeChatter = require('../../roles/role-managers/active-chatters');
-const activeMixplay = require('../../roles/role-managers/active-mixplay-users');
 
 const model = {
     definition: {
@@ -89,50 +88,28 @@ const model = {
             return true;
         }
 
-        let userIds = await channelAccess.getIdsFromUsername(event.effect.username);
-        if (userIds == null) {
+        let userId = (await twitchApi.users.getUserChatInfoByName(event.effect.username)).id;
+        if (userId == null) {
             logger.debug("Couldnt get ids for username in active user list effect.");
             return true;
         }
 
-        // This is silly, but these expect mixer objects which have different ways of formatting these property names.
-        let user = {
-            // eslint-disable-next-line camelcase
-            user_name: username,
-            username: username,
-            userID: userIds.userId,
-            // eslint-disable-next-line camelcase
-            user_id: userIds.userId
-        };
-
         switch (event.effect.list) {
         case "Active Chatters":
             if (event.effect.action === "Add User") {
-                await activeChatter.addOrUpdateActiveChatter(user);
+                await activeChatter.addOrUpdateActiveChatter(userId, username);
             } else if (event.effect.action === "Remove User") {
-                await activeChatter.removeUserFromList(user);
+                await activeChatter.removeUserFromList(userId);
             } else if (event.effect.action === "Clear List") {
                 await activeChatter.clearList();
             }
             break;
-        case "Active Mixplay Users":
-            if (event.effect.action === "Add User") {
-                await activeMixplay.addOrUpdateActiveUser(user);
-            } else if (event.effect.action === "Remove User") {
-                await activeMixplay.removeUserFromList(user);
-            } else if (event.effect.action === "Clear List") {
-                await activeMixplay.clearList();
-            }
-            break;
         case "All":
             if (event.effect.action === "Add User") {
-                await activeMixplay.addOrUpdateActiveUser(user);
-                await activeChatter.addOrUpdateActiveChatter(user);
+                await activeChatter.addOrUpdateActiveChatter(userId, username);
             } else if (event.effect.action === "Remove User") {
-                await activeMixplay.removeUserFromList(user);
-                await activeChatter.removeUserFromList(user);
+                await activeChatter.removeUserFromList(userId);
             } else if (event.effect.action === "Clear List") {
-                await activeMixplay.clearList();
                 await activeChatter.clearList();
             }
             break;

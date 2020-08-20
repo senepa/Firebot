@@ -12,10 +12,10 @@ exports.whenReady = async () => {
     const { ensureRequiredFoldersExist } = require("../../data-tasks");
     ensureRequiredFoldersExist();
 
-    //load mixer auth
+    // load twitch auth
     require("../../../auth/auth-manager");
-    const mixerAuth = require("../../../auth/mixer-auth");
-    mixerAuth.registerMixerAuthProviders();
+    const twitchAuth = require("../../../auth/twitch-auth");
+    twitchAuth.registerTwitchAuthProviders();
 
     // load accounts
     const accountAccess = require("../../../common/account-access");
@@ -27,42 +27,49 @@ exports.whenReady = async () => {
     const timerManager = require("../../../timers/timer-manager");
     timerManager.startTimers();
 
-    const mixerClient = require("../../../mixer-api/client");
-    mixerClient.initClients();
+    const twitchClient = require("../../../twitch-api/client");
+    twitchClient.setupTwitchClients();
+
+    const twitchFrontendListeners = require("../../../twitch-api/frontend-twitch-listeners");
+    twitchFrontendListeners.setupListeners();
 
     // load effects
+    logger.debug("Loading effects...");
     const { loadEffects } = require("../../../effects/builtInEffectLoader");
     loadEffects();
 
     // load commands
+    logger.debug("Loading sys commands...");
     const { loadCommands } = require("../../../chat/commands/systemCommandLoader");
     loadCommands();
 
     // load event sources
+    logger.debug("Loading event sources...");
     const { loadEventSources } = require("../../../events/builtinEventSourceLoader");
     loadEventSources();
 
     // load event filters
+    logger.debug("Loading event filters...");
     const { loadFilters } = require("../../../events/filters/builtin-filter-loader");
     loadFilters();
 
     // load integrations
+    logger.debug("Loading integrations...");
     const { loadIntegrations } = require("../../../integrations/integrationLoader");
     loadIntegrations();
 
     // load variables
+    logger.debug("Loading variables...");
     const { loadReplaceVariables } = require("../../../variables/builtin-variable-loader");
     loadReplaceVariables();
 
     // load restrictions
+    logger.debug("Loading restrictions...");
     const { loadRestrictions } = require("../../../restrictions/builtin-restrictions-loader");
     loadRestrictions();
 
     const fontManager = require("../../../fontManager");
     fontManager.generateAppFontCssFile();
-
-    const mixplayProjectManager = require("../../../interactive/mixplay-project-manager");
-    mixplayProjectManager.loadProjects();
 
     const eventsAccess = require("../../../events/events-access");
     eventsAccess.loadEventsAndGroups();
@@ -72,6 +79,9 @@ exports.whenReady = async () => {
 
     const effectQueueManager = require("../../../effects/queues/effect-queue-manager");
     effectQueueManager.loadEffectQueues();
+
+    const presetEffectListManager = require("../../../effects/preset-lists/preset-effect-list-manager");
+    presetEffectListManager.loadPresetEffectLists();
 
     const chatModerationManager = require("../../../chat/moderation/chat-moderation-manager");
     chatModerationManager.load();
@@ -113,10 +123,6 @@ exports.whenReady = async () => {
     const quotesdb = require("../../../quotes/quotes-manager");
     quotesdb.loadQuoteDatabase();
 
-    //load patronage data
-    const patronageManager = require("../../../patronageManager");
-    patronageManager.loadPatronageData();
-
     // These are defined globally for Custom Scripts.
     // We will probably wnat to handle these differently but we shouldn't
     // change anything until we are ready as changing this will break most scripts
@@ -131,6 +137,9 @@ exports.whenReady = async () => {
     //start the REST api server
     const webServer = require("../../../../server/httpServer");
     webServer.start();
+
+    const channelAccess = require("../../../common/channel-access");
+    channelAccess.refreshStreamerChannelData();
 
     windowManagement.createMainWindow();
 

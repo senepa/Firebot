@@ -102,7 +102,8 @@
         ttsService,
         settingsService,
         countersService,
-        gamesService
+        gamesService,
+        presetEffectListsService
     ) {
         // 'chatMessagesService' is included so its instantiated on app start
 
@@ -124,6 +125,8 @@
         countersService.loadCounters();
 
         gamesService.loadGames();
+
+        presetEffectListsService.loadPresetEffectLists();
 
         //start notification check
         $timeout(() => {
@@ -412,6 +415,16 @@
             if (commands == null || query == null) return commands;
             return commands.filter(c =>
                 c.trigger.toLowerCase().includes(query.toLowerCase())
+            );
+        };
+    });
+
+
+    app.filter("sortTagSearch", function() {
+        return function(elements, tag) {
+            if (elements == null || tag == null) return elements;
+            return elements.filter(e =>
+                e.sortTags != null && e.sortTags.some(t => t === tag.id)
             );
         };
     });

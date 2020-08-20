@@ -6,14 +6,14 @@ const moment = require("moment");
 const { ipcMain } = require("electron");
 const { settings } = require("../common/settings-access.js");
 const currencyDatabase = require("./currencyDatabase");
-const mixplay = require("../interactive/mixplay");
-const chat = require("../chat/chat");
+const twitchChat = require("../chat/twitch-chat");
 const frontendCommunicator = require("../common/frontend-communicator");
 const userAccess = require("../common/user-access");
-const channelAccess = require("../common/channel-access");
 const eventManager = require("../events/EventManager");
 const accountAccess = require("../common/account-access");
 const util = require("../utility");
+
+const twitchApi = require("../twitch-api/api");
 
 /**
  * @type Datastore
@@ -55,11 +55,47 @@ function getUserByUsername(username) {
             return resolve(false);
         }
 
-        let searchTerm = new RegExp(username, 'gi');
+        let searchTerm = new RegExp(`^${username}$`, 'i');
 
-        db.findOne({ username: { $regex: searchTerm } }, (err, doc) => {
+        db.findOne({ username: { $regex: searchTerm }, twitch: true }, (err, doc) => {
             if (err) {
                 return resolve(false);
+            }
+            return resolve(doc);
+        });
+    });
+}
+
+//look up user object by name
+function getTwitchUserByUsername(username) {
+    return new Promise(resolve => {
+        if (!isViewerDBOn()) {
+            return resolve(null);
+        }
+
+        let searchTerm = new RegExp(`^${username}$`, 'i');
+
+        db.findOne({ username: { $regex: searchTerm }, twitch: true }, (err, doc) => {
+            if (err) {
+                return resolve(null);
+            }
+            return resolve(doc);
+        });
+    });
+}
+
+//look up user object by mixer name
+function getMixerUserByUsername(username) {
+    return new Promise(resolve => {
+        if (!isViewerDBOn()) {
+            return resolve(null);
+        }
+
+        let searchTerm = new RegExp(username, 'gi');
+
+        db.findOne({ username: { $regex: searchTerm }, twitch: { $exists: false } }, (err, doc) => {
+            if (err) {
+                return resolve(null);
             }
             return resolve(doc);
         });
@@ -155,10 +191,6 @@ function userViewTimeUpdate(user, previousTotalMinutes, newTotalMinutes) {
     if (newHours < 1) return;
     if (newHours !== previousHours) {
 
-        mixplay.updateParticipantWithData(user._id, {
-            viewTime: `${util.commafy(newHours)} hrs`
-        });
-
         eventManager.triggerEvent("firebot", "view-time-update", {
             username: user.username,
             previousViewTime: previousHours,
@@ -216,15 +248,36 @@ function calcAllUsersOnlineMinutes() {
 }
 
 function removeUser(userId) {
-    if (userId == null) return;
-    db.remove({ _id: userId }, {}, function (err) {
-        if (err) {
-            logger.warn("Failed to remove user from DB", err);
+    return new Promise(resolve => {
+        if (userId == null) {
+            return resolve(false);
         }
+        db.remove({ _id: userId }, {}, function (err) {
+            if (err) {
+                logger.warn("Failed to remove user from DB", err);
+                return resolve(false);
+            }
+            resolve(true);
+        });
     });
 }
 
-function createNewUser(userId, username, channelRoles, isOnline = false) {
+function updateUser(user) {
+    return new Promise(resolve => {
+        if (user == null) {
+            return resolve(false);
+        }
+        db.update({ _id: user._id }, user, {}, function (err) {
+            if (err) {
+                logger.warn("Failed to update user in DB", err);
+                return resolve(false);
+            }
+            resolve(true);
+        });
+    });
+}
+
+function createNewUser(userId, username, displayName, profilePicUrl, isOnline = false) {
     return new Promise(resolve => {
         if (!isViewerDBOn()) {
             return resolve(null);
@@ -238,18 +291,18 @@ function createNewUser(userId, username, channelRoles, isOnline = false) {
         let user = {
             username: username,
             _id: userId,
-            roles: channelRoles,
+            displayName: displayName,
+            profilePicUrl: profilePicUrl,
+            twitch: true,
             online: isOnline,
             onlineAt: Date.now(),
             lastSeen: Date.now(),
             joinDate: Date.now(),
             minutesInChannel: 0,
-            mixplayInteractions: 0,
             chatMessages: 0,
             disableAutoStatAccrual: disableAutoStatAccrual,
             disableActiveUserList: false,
-            currency: {},
-            ranks: {}
+            currency: {}
         };
 
         // THIS IS WHERE YOU ADD IN ANY DYNAMIC FIELDS THAT ALL USERS SHOULD HAVE.
@@ -296,40 +349,64 @@ function setUserOnline(user) {
     });
 }
 
-//set a user online or add them to the database as online
-function setChatUserOnline(data) {
-    return new Promise((resolve, reject) => {
+/**
+ * @typedef {Object} UserDetails
+ * @property {number} id
+ * @property {string} username
+ * @property {string} displayName
+ * @property {string} profilePicUrl
+ */
+
+/**
+ * Set a user as online
+ * @param {UserDetails} userDetails
+ */
+function setChatUserOnline(userDetails) {
+    return new Promise((resolve) => {
         if (!isViewerDBOn()) {
             return resolve();
         }
-        getUserById(data.id).then(
-            async user => {
-                if (user) {
-                    logger.debug("ViewerDB: User exists in DB, setting online: ", data.username);
-                    user.roles = data.roles; // Update user roles when they go online.
-                    user.username = data.username; // Set their username again just in case they have since changed it
-                    setUserOnline(user).then(user => resolve(user), err => reject(err));
-                } else {
-                    logger.debug(
-                        "ViewerDB: Adding Chat User to DB and setting online: ",
-                        data.username
-                    );
-                    await createUserFromChat(data, true);
 
-                    resolve();
+        const now = Date.now();
+
+        db.update(
+            { _id: userDetails.id },
+            {
+                $set: {
+                    username: userDetails.username,
+                    displayName: userDetails.displayName,
+                    profilePicUrl: userDetails.profilePicUrl,
+                    online: true,
+                    onlineAt: now,
+                    lastSeen: now
                 }
             },
-            err => {
-                logger.error("Unable to set user online.", err);
+            {},
+            function (err) {
+                if (err) {
+                    logger.error("Failed to set user to online", err);
+                }
                 resolve();
-            }
-        );
+            });
     });
+}
+
+/**
+ * Adds a new user to the database
+ * @param {UserDetails} userDetails
+ */
+function addNewUserFromChat(userDetails) {
+    return createNewUser(userDetails.id, userDetails.username, userDetails.displayName,
+        userDetails.profilePicUrl, true);
 }
 
 // Sets chat users online using the same function we use to get the chat viewer list for the ui.
 async function setChatUsersOnline() {
-    const viewers = await channelAccess.getCurrentViewerList();
+    const viewers = await twitchChat.getViewerList();
+
+    if (viewers == null) {
+        return;
+    }
 
     for (const viewer of viewers) {
 
@@ -394,11 +471,11 @@ function setAllUsersOffline() {
     });
 }
 
-chat.on("connected", () => {
+twitchChat.on("connected", () => {
     setChatUsersOnline();
 });
 
-chat.on("disconnected", () => {
+twitchChat.on("disconnected", () => {
     setAllUsersOffline();
 });
 
@@ -526,7 +603,6 @@ function incrementDbField(userId, fieldName) {
                 if (updatedDoc != null) {
                     let updateObj = {};
                     updateObj[fieldName] = util.commafy(updatedDoc[fieldName]);
-                    mixplay.updateParticipantWithData(userId, updateObj);
                 }
             }
             resolve();
@@ -560,19 +636,14 @@ frontendCommunicator.onAsync("getViewerDetails", (userId) => {
     return userAccess.getUserDetails(userId);
 });
 
-frontendCommunicator.onAsync("updateUserHearts", (data) => {
-    const { userId, amount } = data;
-    return channelAccess.giveHeartsToUser(userId, amount);
-});
-
 frontendCommunicator.on("updateViewerRole", (data) => {
     const { userId, role, addOrRemove } = data;
-    channelAccess.updateUserRole(userId, role, addOrRemove);
+    //await twitchApi.users.updateUserRole(userId, role, addOrRemove);
 });
 
 frontendCommunicator.on("toggleFollowOnChannel", (data) => {
     const { channelIdToFollow, shouldFollow } = data;
-    channelAccess.toggleFollowOnChannel(channelIdToFollow, shouldFollow);
+    //await twitchApi.users.toggleFollowOnChannel(channelIdToFollow, shouldFollow);
 });
 
 frontendCommunicator.on("updateViewerDataField", (data) => {
@@ -584,10 +655,6 @@ frontendCommunicator.on("updateViewerDataField", (data) => {
     db.update({ _id: userId }, { $set: updateObject }, { returnUpdatedDocs: true }, function(err, _, updatedDoc) {
         if (err) {
             logger.error("Error updating user.", err);
-        } else {
-            if (updatedDoc != null) {
-                mixplay.updateParticipantWithUserData(updatedDoc);
-            }
         }
     });
 });
@@ -639,7 +706,12 @@ exports.setAllUsersOffline = setAllUsersOffline;
 exports.getUserOnlineMinutes = getUserOnlineMinutes;
 exports.getUserByUsername = getUserByUsername;
 exports.getUserById = getUserById;
+exports.getMixerUserByUsername = getMixerUserByUsername;
+exports.getTwitchUserByUsername = getTwitchUserByUsername;
 exports.incrementDbField = incrementDbField;
 exports.getUserDb = getUserDb;
+exports.removeUser = removeUser;
+exports.updateUser = updateUser;
 exports.setChatUsersOnline = setChatUsersOnline;
 exports.getTopViewTimeUsers = getTopViewTimeUsers;
+exports.addNewUserFromChat = addNewUserFromChat;

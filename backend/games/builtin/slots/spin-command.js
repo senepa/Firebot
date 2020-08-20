@@ -1,12 +1,12 @@
 "use strict";
 
 const util = require("../../../utility");
-const chat = require("../../../chat/chat");
+const twitchChat = require("../../../chat/twitch-chat");
 const commandManager = require("../../../chat/commands/CommandManager");
 const gameManager = require("../../game-manager");
 const currencyDatabase = require("../../../database/currencyDatabase");
 const customRolesManager = require("../../../roles/custom-roles-manager");
-const mixerRolesManager = require("../../../../shared/mixer-roles");
+const twitchRolesManager = require("../../../../shared/twitch-roles");
 const slotMachine = require("./slot-machine");
 const moment = require("moment");
 const NodeCache = require("node-cache");
@@ -52,38 +52,33 @@ const spinCommand = {
             const username = userCommand.commandSender;
 
             if (activeSpinners.get(username)) {
-                chat.sendChatMessage("The slot machine is actively working!", username, chatter);
-                chat.deleteMessage(chatEvent.id);
+                twitchChat.sendChatMessage(`${username}, your slot machine is actively working!`, null, chatter);
                 return;
             }
 
             let cooldownExpireTime = cooldownCache.get(username);
             if (cooldownExpireTime && moment().isBefore(cooldownExpireTime)) {
                 const timeRemainingDisplay = util.secondsForHumans(Math.abs(moment().diff(cooldownExpireTime, 'seconds')));
-                chat.sendChatMessage(`The slot machine is currently on cooldown. Time remaining: ${timeRemainingDisplay}`, username, chatter);
-                chat.deleteMessage(chatEvent.id);
+                twitchChat.sendChatMessage(`${username}, your slot machine is currently on cooldown. Time remaining: ${timeRemainingDisplay}`, null, chatter);
                 return;
             }
 
             if (wagerAmount < 1) {
-                chat.sendChatMessage("Wager amount must be more than 0.", username, chatter);
-                chat.deleteMessage(chatEvent.id);
+                twitchChat.sendChatMessage(`${username}, your wager amount must be more than 0.`, null, chatter);
                 return;
             }
 
             const minWager = slotsSettings.settings.currencySettings.minWager;
             if (minWager != null & minWager > 0) {
                 if (wagerAmount < minWager) {
-                    chat.sendChatMessage(`Wager amount must be at least ${minWager}.`, username, chatter);
-                    chat.deleteMessage(chatEvent.id);
+                    twitchChat.sendChatMessage(`${username}, your wager amount must be at least ${minWager}.`, null, chatter);
                     return;
                 }
             }
             const maxWager = slotsSettings.settings.currencySettings.maxWager;
             if (maxWager != null & maxWager > 0) {
                 if (wagerAmount > maxWager) {
-                    chat.sendChatMessage(`Wager amount can be no more than ${maxWager}.`, username, chatter);
-                    chat.deleteMessage(chatEvent.id);
+                    twitchChat.sendChatMessage(`${username}, your wager amount can be no more than ${maxWager}.`, null, chatter);
                     return;
                 }
             }
@@ -93,8 +88,7 @@ const spinCommand = {
             const currencyId = slotsSettings.settings.currencySettings.currencyId;
             const userBalance = await currencyDatabase.getUserCurrencyAmount(username, currencyId);
             if (userBalance < wagerAmount) {
-                chat.sendChatMessage("You don't have enough to wager this amount!", username, chatter);
-                chat.deleteMessage(chatEvent.id);
+                twitchChat.sendChatMessage(`${username}, you don't have enough to wager this amount!`, null, chatter);
                 activeSpinners.del(username);
                 return;
             }
@@ -113,10 +107,10 @@ const spinCommand = {
             if (successChancesSettings) {
                 successChance = successChancesSettings.basePercent;
 
-                const mappedMixerRoles = (userCommand.senderRoles || [])
-                    .filter(mr => mr !== "User")
-                    .map(mr => mixerRolesManager.mapMixerRole(mr));
-                const allRoles = mappedMixerRoles.concat(customRolesManager.getAllCustomRolesForViewer(username));
+                const userCustomRoles = customRolesManager.getAllCustomRolesForViewer(username) || [];
+                const userTwitchRoles = (userCommand.senderRoles || [])
+                    .map(r => twitchRolesManager.mapTwitchRole(r));
+                const allRoles = userCustomRoles.concat(userTwitchRoles);
 
                 for (let role of successChancesSettings.roles) {
                     if (allRoles.some(r => r.id === role.roleId)) {
@@ -136,12 +130,11 @@ const spinCommand = {
 
             const currency = currencyDatabase.getCurrencyById(currencyId);
 
-            chat.sendChatMessage(`${username} hit ${successfulRolls} out of 3 and won ${util.commafy(winnings)} ${currency.name}.`, null, chatter);
+            twitchChat.sendChatMessage(`${username} hit ${successfulRolls} out of 3 and won ${util.commafy(winnings)} ${currency.name}!`, null, chatter);
 
             activeSpinners.del(username);
         } else {
-            chat.sendChatMessage(`Incorrect spin usage: ${userCommand.trigger} [wagerAmount]`, userCommand.commandSender, chatter);
-            chat.deleteMessage(chatEvent.id);
+            twitchChat.sendChatMessage(`Incorrect spin usage: ${userCommand.trigger} [wagerAmount]`, null, chatter);
         }
     }
 };
