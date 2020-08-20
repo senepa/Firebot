@@ -178,22 +178,38 @@ const raffleCommand = {
             }
 
             if (event.userCommand.subcommandId === "raffleManual") {
+
                 let timeLimit = raffleSettings.settings.manualSettings.timeLimit * 60000;
+
+                activeRaffleInfo = {
+                    "active": true
+                };
+
+                bidTimer = setTimeout(function () {
+                    stopRaffle(chatter);
+                }, timeLimit);
+
             } else if (event.userCommand.subcommandId === "raffleCurrency") {
+
                 let timeLimit = raffleSettings.settings.currencySettings.timeLimit * 60000;
+
+                await currencyDatabase.
+
+                    activeRaffleInfo = {
+                    "active": true
+                };
+
+                bidTimer = setTimeout(function () {
+                    stopRaffle(chatter);
+                }, timeLimit);
+
             }
 
-            activeRaffleInfo = {
-                "active": true
-            };
 
-            bidTimer = setTimeout(function () {
-                stopBidding(chatter);
-            }, timeLimit);
 
         } else if (event.userCommand.subcommandId === "raffleStop") {
 
-            stopBidding(chatter);
+            stopRaffle(chatter);
 
         } else if (event.userCommand.subcommandId === "raffleClear") {
 
@@ -203,8 +219,6 @@ const raffleCommand = {
         }
     }
 };
-
-
 
 const raffleEnterCommand = {
     definition: {

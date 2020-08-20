@@ -58,13 +58,13 @@ function adjustCurrency(user, currencyId, value, adjustType = "adjust") {
         let newUserValue = value;
 
         switch (adjustType) {
-        case "set":
-            logger.debug("Currency: Setting " + user.username + " currency " + currencyId + " to: " + value + ".");
-            newUserValue = value;
-            break;
-        default:
-            logger.debug("Currency: Adjusting " + value + " currency to " + user.username + ". " + currencyId);
-            newUserValue = (user.currency[currencyId] += parseInt(value));
+            case "set":
+                logger.debug("Currency: Setting " + user.username + " currency " + currencyId + " to: " + value + ".");
+                newUserValue = value;
+                break;
+            default:
+                logger.debug("Currency: Adjusting " + value + " currency to " + user.username + ". " + currencyId);
+                newUserValue = (user.currency[currencyId] += parseInt(value));
         }
 
         let db = userDatabase.getUserDb();
@@ -86,7 +86,7 @@ function adjustCurrency(user, currencyId, value, adjustType = "adjust") {
         updateDoc[`currency.${currencyId}`] = valueToSet;
 
         // Update the DB with our new currency value.
-        db.update({ _id: user._id }, { $set: updateDoc }, {}, function(err) {
+        db.update({ _id: user._id }, { $set: updateDoc }, {}, function (err) {
             if (err) {
                 logger.error("Currency: Error setting currency on user.", err);
             } else {
@@ -219,7 +219,7 @@ function addCurrencyToAllUsers(currencyId, value) {
     let db = userDatabase.getUserDb();
     let updateDoc = {};
     updateDoc[`currency.${currencyId}`] = value;
-    db.update({}, { $set: updateDoc }, { multi: true }, function(
+    db.update({}, { $set: updateDoc }, { multi: true }, function (
         err
     ) {
         if (err) {
@@ -234,7 +234,7 @@ function addCurrencyToNewUser(user) {
         return;
     }
     let currencies = getCurrencies();
-    Object.keys(currencies).forEach(function(currency) {
+    Object.keys(currencies).forEach(function (currency) {
         currency = currencies[currency];
         user.currency[currency.id] = 0;
     });
@@ -259,6 +259,29 @@ function getUserCurrencyAmount(username, currencyId) {
     });
 }
 
+// Get Total Currency Amount
+// This will retrieve the amount of currency in circulation.
+function getTotalCurrencyAmount(currencyId) {
+    return new Promise(resolve => {
+        if (!isViewerDBOn()) {
+            return resolve([]);
+        }
+
+        let db = userDatabase.getUserDb();
+
+        //TODO: write aggregation query
+
+        db.find({}).exec(function (err, docs) {
+            if (err) {
+                logger.error("Error getting top currency holders: ", err);
+                return resolve([]);
+            }
+            return resolve(docs || []);
+        });
+    });
+}
+}
+
 function getTopCurrencyHolders(currencyId, count) {
     return new Promise(resolve => {
         if (!isViewerDBOn()) {
@@ -270,10 +293,34 @@ function getTopCurrencyHolders(currencyId, count) {
         const sortObj = {};
         sortObj[`currency.${currencyId}`] = -1;
 
-        const projectionObj = { username: 1};
+        const projectionObj = { username: 1 };
         projectionObj[`currency.${currencyId}`] = 1;
 
         db.find({}).sort(sortObj).limit(count).projection(projectionObj).exec(function (err, docs) {
+            if (err) {
+                logger.error("Error getting top currency holders: ", err);
+                return resolve([]);
+            }
+            return resolve(docs || []);
+        });
+    });
+}
+
+function getAllCurrencyHolders(currencyId) {
+    return new Promise(resolve => {
+        if (!isViewerDBOn()) {
+            return resolve([]);
+        }
+
+        let db = userDatabase.getUserDb();
+
+        const sortObj = {};
+        sortObj[`currency.${currencyId}`] = -1;
+
+        const projectionObj = { username: 1 };
+        projectionObj[`currency.${currencyId}`] = 1;
+
+        db.find({}).sort(sortObj).projection(projectionObj).exec(function (err, docs) {
             if (err) {
                 logger.error("Error getting top currency holders: ", err);
                 return resolve([]);
@@ -292,7 +339,7 @@ function purgeCurrencyById(currencyId) {
     let db = userDatabase.getUserDb();
     let updateDoc = {};
     updateDoc[`currency.${currencyId}`] = 0;
-    db.update({}, { $set: updateDoc }, { multi: true }, function(
+    db.update({}, { $set: updateDoc }, { multi: true }, function (
         err
     ) {
         if (err) {
@@ -308,11 +355,11 @@ function deleteCurrencyById(currencyId) {
         return;
     }
     let db = userDatabase.getUserDb();
-    db.find({}, function(err, docs) {
+    db.find({}, function (err, docs) {
         for (let i = 0; i < docs.length; i++) {
             let user = docs[i];
             delete user.currency[currencyId];
-            db.update({ _id: user._id }, { $set: user }, {}, function(
+            db.update({ _id: user._id }, { $set: user }, {}, function (
                 err
             ) {
                 if (err) {
@@ -377,6 +424,7 @@ exports.adjustCurrencyForUser = adjustCurrencyForUser;
 exports.addCurrencyToOnlineUsers = addCurrencyToOnlineUsers;
 exports.addCurrencyToOnlineUsers = addCurrencyToOnlineUsers;
 exports.getUserCurrencyAmount = getUserCurrencyAmount;
+exports.getTotalCurrencyAmount = getTotalCurrencyAmount;
 exports.purgeCurrencyById = purgeCurrencyById;
 exports.addCurrencyToNewUser = addCurrencyToNewUser;
 exports.refreshCurrencyCache = refreshCurrencyCache;
@@ -385,3 +433,4 @@ exports.getCurrencyById = getCurrencyById;
 exports.addCurrencyToUserGroupOnlineUsers = addCurrencyToUserGroupOnlineUsers;
 exports.isViewerDBOn = isViewerDBOn;
 exports.getTopCurrencyHolders = getTopCurrencyHolders;
+exports.getAllCurrencyHolders = getAllCurrencyHolders;
