@@ -199,9 +199,7 @@ const raffleCommand = {
 
                 let timeLimit = raffleSettings.settings.currencySettings.timeLimit * 60000;
 
-                await currencyDatabase.
-
-                    activeRaffleInfo = {
+                activeRaffleInfo = {
                     "active": true
                 };
 
@@ -235,7 +233,7 @@ const raffleEnterCommand = {
         name: "Enter",
         active: true,
         trigger: "!enter",
-        description: "Allows viewers to enter a raffle.",
+        description: "Allows a user to enter a raffle.",
         autoDeleteTrigger: false,
         scanWholeMessage: false,
         hideCooldowns: true,
@@ -261,7 +259,7 @@ const raffleClaimCommand = {
         name: "Claim",
         active: true,
         trigger: "!claim",
-        description: "Allows users to claim raffle winnings.",
+        description: "Allows a user to claim raffle winnings.",
         autoDeleteTrigger: false,
         scanWholeMessage: false,
         hideCooldowns: true,
