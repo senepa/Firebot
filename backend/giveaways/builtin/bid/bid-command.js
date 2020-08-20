@@ -3,7 +3,7 @@
 const util = require("../../../utility");
 const twitchChat = require("../../../chat/twitch-chat");
 const commandManager = require("../../../chat/commands/CommandManager");
-const gameManager = require("../../game-manager");
+const giveawayManager = require("../../giveaway-manager");
 const currencyDatabase = require("../../../database/currencyDatabase");
 const moment = require("moment");
 const NodeCache = require("node-cache");
@@ -14,7 +14,7 @@ let activeBiddingInfo = {
     "topBidder": ""
 };
 let bidTimer;
-const cooldownCache = new NodeCache({checkperiod: 5});
+const cooldownCache = new NodeCache({ checkperiod: 5 });
 const BID_COMMAND_ID = "firebot:bid";
 
 function purgeCaches() {
@@ -38,7 +38,7 @@ const bidCommand = {
         name: "Bid",
         active: true,
         trigger: "!bid",
-        description: "Allows viewers to participate in the Bid game.",
+        description: "Allows viewers to participate in the Bid giveaway.",
         autoDeleteTrigger: false,
         scanWholeMessage: false,
         hideCooldowns: true,
@@ -98,7 +98,7 @@ const bidCommand = {
     onTriggerEvent: async event => {
         const { chatEvent, userCommand } = event;
 
-        const bidSettings = gameManager.getGameSettings("firebot-bid");
+        const bidSettings = giveawayManager.getGiveawaySettings("firebot-bid");
         const chatter = bidSettings.settings.chatSettings.chatter;
 
         const currencyId = bidSettings.settings.currencySettings.currencyId;
@@ -139,7 +139,7 @@ const bidCommand = {
             twitchChat.sendChatMessage(`Bidding has started at ${bidAmount} ${currencyName}. Type !bid ${minimumBidWithRaise} to start bidding.`, null, chatter);
 
             let timeLimit = bidSettings.settings.timeSettings.timeLimit * 60000;
-            bidTimer = setTimeout(function() {
+            bidTimer = setTimeout(function () {
                 stopBidding(chatter);
             }, timeLimit);
 

@@ -280,7 +280,6 @@ function getTotalCurrencyAmount(currencyId) {
         });
     });
 }
-}
 
 function getTopCurrencyHolders(currencyId, count) {
     return new Promise(resolve => {

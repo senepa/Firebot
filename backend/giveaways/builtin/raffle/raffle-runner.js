@@ -1,6 +1,6 @@
 "use strict";
 const moment = require("moment");
-const gameManager = require("../../game-manager");
+const giveawayManager = require("../../giveaway-manager");
 const twitchChat = require("../../../chat/twitch-chat");
 const commandManager = require("../../../chat/commands/CommandManager");
 const currencyDatabase = require("../../../database/currencyDatabase");
@@ -9,7 +9,7 @@ const util = require("../../../utility");
 /**
  * @typedef RaffleUser
  * @property {string} username - The user's name
- * @property {number} successPercentage - The users win percentage
+ * @property {number} tickets - The amount of currency the user has
  */
 
 /**@type {RaffleUser[]} */
@@ -19,16 +19,14 @@ let startDelayTimeoutId = null;
 exports.lobbyOpen = false;
 
 async function runRaffle() {
-    const raffleSettings = gameManager.getGameSettings("firebot-raffle");
+    const raffleSettings = giveawayManager.getGiveawaySettings("firebot-raffle");
     const chatter = raffleSettings.settings.chatSettings.chatter;
 
-    const startMessage = raffleSettings.settings.generalMessages.startMessage;
+    const startMessage = raffleSettings.settings.manualSettings.startMessage;
     twitchChat.sendChatMessage(startMessage, null, chatter);
 
     // wait a few secs for suspense
     await util.wait(7 * 1000);
-
-    const survivers = [];
 
     const randomIndex = util.getRandomInt(0, messages.length - 1);
     let outcomeMessage = messages[randomIndex];
@@ -38,7 +36,7 @@ async function runRaffle() {
             .replace("{user}", usersInHeist[0].username);
     }
 
-    const currencyId = heistSettings.settings.currencySettings.currencyId;
+    const currencyId = raffleSettings.settings.currencySettings.currencyId;
     for (const user of survivers) {
         await currencyDatabase.adjustCurrencyForUser(user.username, currencyId, user.winnings);
     }
@@ -52,7 +50,7 @@ async function runRaffle() {
         winningsString = "None";
     }
 
-    const winningsMessage = heistSettings.settings.generalMessages.heistWinnings
+    const winningsMessage = raffleSettings.settings.generalMessages.heistWinnings
         .replace("{winnings}", winningsString);
 
     try {
@@ -78,9 +76,9 @@ exports.triggerLobbyStart = (startDelayMins) => {
         exports.lobbyOpen = false;
         startDelayTimeoutId = null;
 
-        const heistSettings = gameManager.getGameSettings("firebot-heist");
-        const currencyId = heistSettings.settings.currencySettings.currencyId;
-        const chatter = heistSettings.settings.chatSettings.chatter;
+        const raffleSettings- = giveawayManager.getGiveawaySettings("firebot-raffle");
+        const currencyId = raffleSettings.settings.currencySettings.currencyId;
+        const chatter = raffleSettings.settings.chatSettings.chatter;
 
 
 

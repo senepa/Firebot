@@ -3,7 +3,7 @@
 const bidCommand = require("./bid-command");
 
 /**
- * @type {import('../../game-manager').FirebotGame}
+ * @type {import('../../giveaway-manager').FirebotGiveaway}
  */
 module.exports = {
     id: "firebot-bid",
