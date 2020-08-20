@@ -52,8 +52,8 @@ const raffleCommand = {
             {
                 id: "raffleStart",
                 arg: "start",
-                usage: "start",
-                description: "Starts a raffle and gives users time to enter.",
+                usage: "start [manual | currency]",
+                description: "Starts a raffle.",
                 hideCooldowns: true,
                 restrictionData: {
                     restrictions: [
@@ -74,7 +74,7 @@ const raffleCommand = {
                         id: "raffleManual",
                         arg: "manual",
                         usage: "manual",
-                        description: "Starts a raffle for users in chat without using manual entry.",
+                        description: "Starts a raffle for users in chat using manual entry.",
                         hideCooldowns: true,
                         restrictionData: {
                             restrictions: [
@@ -111,7 +111,7 @@ const raffleCommand = {
                                 }
                             ]
                         }
-                    },
+                    }
                 ]
             },
             {
@@ -161,10 +161,10 @@ const raffleCommand = {
     onTriggerEvent: async event => {
         const { chatEvent, userCommand } = event;
 
-        const bidSettings = gameManager.getGameSettings("firebot-raffle");
-        const chatter = bidSettings.settings.chatSettings.chatter;
+        const raffleSettings = gameManager.getGameSettings("firebot-raffle");
+        const chatter = raffleSettings.settings.chatSettings.chatter;
 
-        const currencyId = bidSettings.settings.currencySettings.currencyId;
+        const currencyId = raffleSettings.settings.currencySettings.currencyId;
         const currency = currencyDatabase.getCurrencyById(currencyId);
         const currencyName = currency.name;
 
@@ -177,96 +177,26 @@ const raffleCommand = {
                 return;
             }
 
+            if (event.userCommand.subcommandId === "raffleManual") {
+                let timeLimit = raffleSettings.settings.manualSettings.timeLimit * 60000;
+            } else if (event.userCommand.subcommandId === "raffleCurrency") {
+                let timeLimit = raffleSettings.settings.currencySettings.timeLimit * 60000;
+            }
+
             activeRaffleInfo = {
                 "active": true
             };
 
-            let raiseMinimum = bidSettings.settings.currencySettings.minIncrement;
-            let minimumBidWithRaise = activeBiddingInfo.currentBid + raiseMinimum;
-            twitchChat.sendChatMessage(`Bidding has started at ${bidAmount} ${currencyName}. Type !bid ${minimumBidWithRaise} to start bidding.`, null, chatter);
-
-            let timeLimit = bidSettings.settings.timeSettings.timeLimit * 60000;
             bidTimer = setTimeout(function () {
                 stopBidding(chatter);
             }, timeLimit);
 
         } else if (event.userCommand.subcommandId === "raffleStop") {
+
             stopBidding(chatter);
+
         } else if (event.userCommand.subcommandId === "raffleClear") {
 
-            const triggeredArg = userCommand.args[0];
-            const bidAmount = parseInt(triggeredArg);
-            const username = userCommand.commandSender;
-
-            if (activeBiddingInfo.active === false) {
-                twitchChat.sendChatMessage(`There is no active bidding in progress.`, username, chatter);
-                twitchChat.deleteMessage(chatEvent.id);
-                return;
-            }
-
-            let cooldownExpireTime = cooldownCache.get(username);
-            if (cooldownExpireTime && moment().isBefore(cooldownExpireTime)) {
-                const timeRemainingDisplay = util.secondsForHumans(Math.abs(moment().diff(cooldownExpireTime, 'seconds')));
-                twitchChat.sendChatMessage(`You placed a bid recently! Please wait ${timeRemainingDisplay} before placing another bid.`, username, chatter);
-                twitchChat.deleteMessage(chatEvent.id);
-                return;
-            }
-
-            if (activeBiddingInfo.topBidder === username) {
-                twitchChat.sendChatMessage("You are already the top bidder. You can't bid against yourself.", username, chatter);
-                twitchChat.deleteMessage(chatEvent.id);
-                return;
-            }
-
-            if (bidAmount < 1) {
-                twitchChat.sendChatMessage("Bid amount must be more than 0.", username, chatter);
-                twitchChat.deleteMessage(chatEvent.id);
-                return;
-            }
-
-            const minBid = bidSettings.settings.currencySettings.minBid;
-            if (minBid != null & minBid > 0) {
-                if (bidAmount < minBid) {
-                    twitchChat.sendChatMessage(`Bid amount must be at least ${minBid} ${currencyName}.`, username, chatter);
-                    twitchChat.deleteMessage(chatEvent.id);
-                    return;
-                }
-            }
-
-            const userBalance = await currencyDatabase.getUserCurrencyAmount(username, currencyId);
-            if (userBalance < bidAmount) {
-                twitchChat.sendChatMessage(`You don't have enough ${currencyName}!`, username, chatter);
-                twitchChat.deleteMessage(chatEvent.id);
-                return;
-            }
-
-            let raiseMinimum = bidSettings.settings.currencySettings.minIncrement;
-            let minimumBidWithRaise = activeBiddingInfo.currentBid + raiseMinimum;
-            if (bidAmount < minimumBidWithRaise) {
-                twitchChat.sendChatMessage(`You must bid at least ${minimumBidWithRaise} ${currencyName}.`, username, chatter);
-                twitchChat.deleteMessage(chatEvent.id);
-                return;
-            }
-
-            let previousHighBidder = activeBiddingInfo.topBidder;
-            let previousHighBidAmount = activeBiddingInfo.currentBid;
-            if (previousHighBidder != null && previousHighBidder !== "") {
-                await currencyDatabase.adjustCurrencyForUser(previousHighBidder, currencyId, previousHighBidAmount);
-                twitchChat.sendChatMessage(`You have been out bid! You've been refunded ${previousHighBidAmount} ${currencyName}.`, previousHighBidder, chatter);
-            }
-
-            await currencyDatabase.adjustCurrencyForUser(username, currencyId, -Math.abs(bidAmount));
-            let newTopBidWithRaise = bidAmount + raiseMinimum;
-            twitchChat.sendChatMessage(`${username} is the new high bidder at ${bidAmount} ${currencyName}. To bid, type !bid ${newTopBidWithRaise} (or higher).`);
-
-            // eslint-disable-next-line no-use-before-define
-            setNewHighBidder(username, bidAmount);
-
-            let cooldownSecs = bidSettings.settings.cooldownSettings.cooldown;
-            if (cooldownSecs && cooldownSecs > 0) {
-                const expireTime = moment().add(cooldownSecs, 'seconds');
-                cooldownCache.set(username, expireTime, cooldownSecs);
-            }
         } else {
             twitchChat.sendChatMessage(`Incorrect raffle usage: ${userCommand.trigger}`, userCommand.commandSender, chatter);
             twitchChat.deleteMessage(chatEvent.id);
