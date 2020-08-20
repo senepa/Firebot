@@ -4,7 +4,7 @@
 
     angular
         .module("firebotApp")
-        .factory("giveawayService", function ($q, logger, backendCommunicator) {
+        .factory("giveawaysService", function ($q, logger, backendCommunicator) {
             let service = {};
 
             service.giveaways = [];
