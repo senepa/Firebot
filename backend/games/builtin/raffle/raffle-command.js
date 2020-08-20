@@ -177,6 +177,8 @@ const raffleCommand = {
                 return;
             }
 
+            // When "!raffle start manual" is called, chat users use "!enter" to enter the raffle
+            // After timeLimit is reached, a winner is randomly selected from the list of entered users.
             if (event.userCommand.subcommandId === "raffleManual") {
 
                 let timeLimit = raffleSettings.settings.manualSettings.timeLimit * 60000;
@@ -189,6 +191,10 @@ const raffleCommand = {
                     stopRaffle(chatter);
                 }, timeLimit);
 
+                // When "!raffle start currency" is called, the currency of all users is totalled.
+                // A random number is picked between 0 and the currency total, called the winning number.
+                // A loop iterates through all currency holders, subtracting their currency amounts from the winning number.
+                // When the winning number hits 0, that user is selected as the winner and announced to chat
             } else if (event.userCommand.subcommandId === "raffleCurrency") {
 
                 let timeLimit = raffleSettings.settings.currencySettings.timeLimit * 60000;
@@ -206,12 +212,15 @@ const raffleCommand = {
             }
 
 
-
+            // raffleStop stops a manual raffle early
         } else if (event.userCommand.subcommandId === "raffleStop") {
 
             stopRaffle(chatter);
 
+            // raffleClear removes all of the currency from all holders
         } else if (event.userCommand.subcommandId === "raffleClear") {
+
+            await currencyDatabase.purgeCurrencyById(currencyId);
 
         } else {
             twitchChat.sendChatMessage(`Incorrect raffle usage: ${userCommand.trigger}`, userCommand.commandSender, chatter);
