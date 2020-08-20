@@ -1,28 +1,28 @@
 "use strict";
 const moment = require("moment");
-const gameManager = require("../../game-manager");
+const giveawayManager = require("../../giveaway-manager");
 const twitchChat = require("../../../chat/twitch-chat");
 const commandManager = require("../../../chat/commands/CommandManager");
 const currencyDatabase = require("../../../database/currencyDatabase");
 const util = require("../../../utility");
 
 /**
- * @typedef RaffleUser
+ * @typedef LotteryUser
  * @property {string} username - The user's name
  * @property {number} tickets - The amount of currency the user has
  */
 
-/**@type {RaffleUser[]} */
-let usersInRaffle = [];
+/**@type {LotteryUser[]} */
+let usersInLottery = [];
 
 let startDelayTimeoutId = null;
 exports.lobbyOpen = false;
 
-async function runRaffle() {
-    const raffleSettings = gameManager.getGameSettings("firebot-raffle");
-    const chatter = raffleSettings.settings.chatSettings.chatter;
+async function runLottery() {
+    const lotterySettings = giveawayManager.getLotterySettings("firebot-lottery");
+    const chatter = lotterySettings.settings.chatSettings.chatter;
 
-    const startMessage = raffleSettings.settings.manualSettings.startMessage;
+    const startMessage = lotterySettings.settings.manualSettings.startMessage;
     twitchChat.sendChatMessage(startMessage, null, chatter);
 
     // wait a few secs for suspense
@@ -36,7 +36,7 @@ async function runRaffle() {
             .replace("{user}", usersInHeist[0].username);
     }
 
-    const currencyId = raffleSettings.settings.currencySettings.currencyId;
+    const currencyId = lotterySettings.settings.currencySettings.currencyId;
     for (const user of survivers) {
         await currencyDatabase.adjustCurrencyForUser(user.username, currencyId, user.winnings);
     }
@@ -50,7 +50,7 @@ async function runRaffle() {
         winningsString = "None";
     }
 
-    const winningsMessage = raffleSettings.settings.generalMessages.heistWinnings
+    const winningsMessage = lotterySettings.settings.generalMessages.heistWinnings
         .replace("{winnings}", winningsString);
 
     try {
@@ -76,34 +76,34 @@ exports.triggerLobbyStart = (startDelayMins) => {
         exports.lobbyOpen = false;
         startDelayTimeoutId = null;
 
-        const raffleSettings = gameManager.getGameSettings("firebot-heist");
-        const currencyId = raffleSettings.settings.currencySettings.currencyId;
-        const chatter = raffleSettings.settings.chatSettings.chatter;
+        const lotterySettings = giveawayManager.getLotterySettings("firebot-lottery");
+        const currencyId = lotterySettings.settings.currencySettings.currencyId;
+        const chatter = lotterySettings.settings.chatSettings.chatter;
 
 
 
         twitchChat.sendChatMessage(teamTooSmallMessage, null, chatter);
 
-        usersInRaffle = [];
+        usersInLottery = [];
         return;
 
-        runRaffle();
+        runLottery();
 
     }, startDelayMins * 60000);
 };
 
 /**
  *
- * @param {RaffleUser} user
+ * @param {LotteryUser} user
  */
 exports.addUser = (user) => {
     if (user == null) return;
-    if (usersInRaffle.some(u => u.username === user.username)) return;
-    usersInRaffle.push(user);
+    if (usersInLottery.some(u => u.username === user.username)) return;
+    usersInLottery.push(user);
 };
 
-exports.userInRaffle = (username) => {
-    return usersInRaffle.some(e => e.username === username);
+exports.userInLottery = (username) => {
+    return usersInLottery.some(e => e.username === username);
 };
 
 exports.clearCooldowns = () => {

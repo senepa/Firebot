@@ -11,49 +11,49 @@ const twitchRolesManager = require("../../../../shared/twitch-roles");
 const moment = require("moment");
 const NodeCache = require("node-cache");
 
-let activeRaffleInfo = {
+let activeLotteryInfo = {
     "active": false,
     "winner": ""
 };
 
-let raffleTimer;
+let lotteryTimer;
 
 const cooldownCache = new NodeCache({ checkperiod: 5 });
 
-const RAFFLE_COMMAND_ID = "firebot:raffle";
-const ENTER_COMMAND_ID = "firebot:raffleEnter";
-const CLAIM_COMMAND_ID = "firebot:raffleClaim";
+const LOTTERY_COMMAND_ID = "firebot:lottery";
+const ENTER_COMMAND_ID = "firebot:lotteryEnter";
+const CLAIM_COMMAND_ID = "firebot:lotteryClaim";
 
 function purgeCaches() {
     cooldownCache.flushAll();
-    activeRaffleInfo = {
+    activeLotteryInfo = {
         "active": false,
         "winner": ""
     };
 }
 
-function stopRaffle(chatter) {
-    clearTimeout(raffleTimer);
-    twitchChat.sendChatMessage(`${activeRaffleInfo.winner} has won the raffle, type !claim to claim your prize!`, null, chatter);
+function stopLottery(chatter) {
+    clearTimeout(lotteryTimer);
+    twitchChat.sendChatMessage(`${activeLotteryInfo.winner} has won the lottery, type !claim to claim your prize!`, null, chatter);
     purgeCaches();
 }
 
-const raffleCommand = {
+const lotteryCommand = {
     definition: {
-        id: RAFFLE_COMMAND_ID,
-        name: "Raffle",
+        id: LOTTERY_COMMAND_ID,
+        name: "Lottery",
         active: true,
-        trigger: "!raffle",
-        description: "Allows viewers to participate in a raffle.",
+        trigger: "!lottery",
+        description: "Allows viewers to participate in a lottery.",
         autoDeleteTrigger: false,
         scanWholeMessage: false,
         hideCooldowns: true,
         subCommands: [
             {
-                id: "raffleStart",
+                id: "lotteryStart",
                 arg: "start",
                 usage: "start [manual | currency]",
-                description: "Starts a raffle.",
+                description: "Starts a lottery.",
                 hideCooldowns: true,
                 restrictionData: {
                     restrictions: [
@@ -71,10 +71,10 @@ const raffleCommand = {
                 },
                 subCommands: [
                     {
-                        id: "raffleManual",
+                        id: "lotteryManual",
                         arg: "manual",
                         usage: "manual",
-                        description: "Starts a raffle for users in chat using manual entry.",
+                        description: "Starts a lottery for users in chat using manual entry.",
                         hideCooldowns: true,
                         restrictionData: {
                             restrictions: [
@@ -92,10 +92,10 @@ const raffleCommand = {
                         }
                     },
                     {
-                        id: "raffleCurrency",
+                        id: "lotteryCurrency",
                         arg: "currency",
                         usage: "currency",
-                        description: "Starts a raffle for users in chat using a currency system.",
+                        description: "Starts a lottery for users in chat using a currency system.",
                         hideCooldowns: true,
                         restrictionData: {
                             restrictions: [
@@ -115,10 +115,10 @@ const raffleCommand = {
                 ]
             },
             {
-                id: "raffleStop",
+                id: "lotteryStop",
                 arg: "stop",
                 usage: "stop",
-                description: "Manually stops the raffle. Selects a winner.",
+                description: "Manually stops the lottery. Selects a winner.",
                 hideCooldowns: true,
                 restrictionData: {
                     restrictions: [
@@ -136,10 +136,10 @@ const raffleCommand = {
                 }
             },
             {
-                id: "raffleClear",
+                id: "lotteryClear",
                 arg: "clear",
                 usage: "clear",
-                description: "Clears the raffle currency for all users.",
+                description: "Clears the lottery currency for all users.",
                 hideCooldowns: true,
                 restrictionData: {
                     restrictions: [
@@ -161,59 +161,59 @@ const raffleCommand = {
     onTriggerEvent: async event => {
         const { chatEvent, userCommand } = event;
 
-        const raffleSettings = gameManager.getGameSettings("firebot-raffle");
-        const chatter = raffleSettings.settings.chatSettings.chatter;
+        const lotterySettings = gameManager.getGameSettings("firebot-lottery");
+        const chatter = lotterySettings.settings.chatSettings.chatter;
 
-        const currencyId = raffleSettings.settings.currencySettings.currencyId;
+        const currencyId = lotterySettings.settings.currencySettings.currencyId;
         const currency = currencyDatabase.getCurrencyById(currencyId);
         const currencyName = currency.name;
 
-        if (event.userCommand.subcommandId === "raffleStart") {
+        if (event.userCommand.subcommandId === "lotteryStart") {
             const username = userCommand.commandSender;
 
             if (activeBiddingInfo.active !== false) {
-                twitchChat.sendChatMessage(`There is already a raffle running. Use !raffle stop to stop it.`, username, chatter);
+                twitchChat.sendChatMessage(`There is already a lottery running. Use !lottery stop to stop it.`, username, chatter);
                 twitchChat.deleteMessage(chatEvent.id);
                 return;
             }
 
-            // When "!raffle start manual" is called, chat users use "!enter" to enter the raffle
+            // When "!lottery start manual" is called, chat users use "!enter" to enter the lottery
             // After timeLimit is reached, a winner is randomly selected from the list of entered users.
-            if (event.userCommand.subcommandId === "raffleManual") {
+            if (event.userCommand.subcommandId === "lotteryManual") {
 
-                let timeLimit = raffleSettings.settings.manualSettings.startDelay * 60000;
+                let timeLimit = lotterySettings.settings.manualSettings.startDelay * 60000;
 
-                activeRaffleInfo = {
+                activeLotteryInfo = {
                     "active": true
                 };
 
                 bidTimer = setTimeout(function () {
-                    stopRaffle(chatter);
+                    stopLottery(chatter);
                 }, timeLimit);
 
-                // When "!raffle start currency" is called, the currency of all users is totalled.
+                // When "!lottery start currency" is called, the currency of all users is totalled.
                 // A random number is picked between 0 and the currency total, called the winning number.
                 // A loop iterates through all currency holders, subtracting their currency amounts from the winning number.
                 // When the winning number hits 0, that user is selected as the winner and announced to chat
-            } else if (event.userCommand.subcommandId === "raffleCurrency") {
+            } else if (event.userCommand.subcommandId === "lotteryCurrency") {
 
-                let timeLimit = raffleSettings.settings.currencySettings.startDelay * 60000;
+                let timeLimit = lotterySettings.settings.currencySettings.startDelay * 60000;
 
-                activeRaffleInfo = {
+                activeLotteryInfo = {
                     "active": true
                 };
 
                 bidTimer = setTimeout(function () {
-                    stopRaffle(chatter);
+                    stopLottery(chatter);
                 }, timeLimit);
 
             }
 
 
-            if (!raffleRunner.lobbyOpen) {
+            if (!lotteryRunner.lobbyOpen) {
 
-                const startDelay = raffleSettings.settings.generalSettings.startDelay || 1;
-                raffleRunner.triggerLobbyStart(startDelay);
+                const startDelay = lotterySettings.settings.generalSettings.startDelay || 1;
+                lotteryRunner.triggerLobbyStart(startDelay);
 
                 const teamCreationMessage = heistSettings.settings.generalMessages.teamCreation
                     .replace("{user}", username)
@@ -223,30 +223,30 @@ const raffleCommand = {
                 twitchChat.sendChatMessage(teamCreationMessage, null, chatter);
             }
 
-            // raffleStop stops a manual raffle early
-        } else if (event.userCommand.subcommandId === "raffleStop") {
+            // lotteryStop stops a manual lottery early
+        } else if (event.userCommand.subcommandId === "lotteryStop") {
 
-            stopRaffle(chatter);
+            stopLottery(chatter);
 
-            // raffleClear removes all of the currency from all holders
-        } else if (event.userCommand.subcommandId === "raffleClear") {
+            // lotteryClear removes all of the currency from all holders
+        } else if (event.userCommand.subcommandId === "lotteryClear") {
 
             await currencyDatabase.purgeCurrencyById(currencyId);
 
         } else {
-            twitchChat.sendChatMessage(`Incorrect raffle usage: ${userCommand.trigger}`, userCommand.commandSender, chatter);
+            twitchChat.sendChatMessage(`Incorrect lottery usage: ${userCommand.trigger}`, userCommand.commandSender, chatter);
             twitchChat.deleteMessage(chatEvent.id);
         }
     }
 };
 
-const raffleEnterCommand = {
+const lotteryEnterCommand = {
     definition: {
         id: ENTER_COMMAND_ID,
         name: "Enter",
         active: true,
         trigger: "!enter",
-        description: "Allows a user to enter a raffle.",
+        description: "Allows a user to enter a lottery.",
         autoDeleteTrigger: false,
         scanWholeMessage: false,
         hideCooldowns: true,
@@ -255,7 +255,7 @@ const raffleEnterCommand = {
 
         const { chatEvent, userCommand } = event;
 
-        const bidSettings = gameManager.getGameSettings("firebot-raffle");
+        const bidSettings = gameManager.getGameSettings("firebot-lottery");
 
         const chatter = bidSettings.settings.chatSettings.chatter;
 
@@ -266,13 +266,13 @@ const raffleEnterCommand = {
     }
 };
 
-const raffleClaimCommand = {
+const lotteryClaimCommand = {
     definition: {
         id: CLAIM_COMMAND_ID,
         name: "Claim",
         active: true,
         trigger: "!claim",
-        description: "Allows a user to claim raffle winnings.",
+        description: "Allows a user to claim lottery winnings.",
         autoDeleteTrigger: false,
         scanWholeMessage: false,
         hideCooldowns: true,
@@ -281,7 +281,7 @@ const raffleClaimCommand = {
 
         const { chatEvent, userCommand } = event;
 
-        const bidSettings = gameManager.getGameSettings("firebot-raffle");
+        const bidSettings = gameManager.getGameSettings("firebot-lottery");
 
         const chatter = bidSettings.settings.chatSettings.chatter;
 
@@ -292,24 +292,24 @@ const raffleClaimCommand = {
     }
 };
 
-function registerRaffleCommand() {
-    if (!commandManager.hasSystemCommand(RAFFLE_COMMAND_ID)) {
-        commandManager.registerSystemCommand(raffleCommand);
+function registerLotteryCommand() {
+    if (!commandManager.hasSystemCommand(LOTTERY_COMMAND_ID)) {
+        commandManager.registerSystemCommand(lotteryCommand);
     }
     if (!commandManager.hasSystemCommand(ENTER_COMMAND_ID)) {
-        commandManager.registerSystemCommand(raffleEnterCommand);
+        commandManager.registerSystemCommand(lotteryEnterCommand);
     }
     if (!commandManager.hasSystemCommand(CLAIM_COMMAND_ID)) {
-        commandManager.registerSystemCommand(raffleClaimCommand);
+        commandManager.registerSystemCommand(lotteryClaimCommand);
     }
 }
 
-function unregisterRaffleCommand() {
-    commandManager.unregisterSystemCommand(RAFFLE_COMMAND_ID);
+function unregisterLotteryCommand() {
+    commandManager.unregisterSystemCommand(LOTTERY_COMMAND_ID);
     commandManager.unregisterSystemCommand(ENTER_COMMAND_ID);
     commandManager.unregisterSystemCommand(CLAIM_COMMAND_ID);
 }
 
 exports.purgeCaches = purgeCaches;
-exports.registerRaffleCommand = registerRaffleCommand;
-exports.unregisterRaffleCommand = unregisterRaffleCommand;
+exports.registerLotteryCommand = registerLotteryCommand;
+exports.unregisterLotteryCommand = unregisterLotteryCommand;

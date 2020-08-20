@@ -1,25 +1,25 @@
 "use strict";
 
-const raffleCommand = require("./lottery-command");
+const lotteryCommand = require("./lottery-command");
 
 /**
- * @type {import('../../game-manager').FirebotGame}
+ * @type {import('../../giveaaway-manager').FirebotGiveaway}
  */
 module.exports = {
-    id: "firebot-raffle",
-    name: "Raffle",
+    id: "firebot-lottery",
+    name: "Lottery",
     subtitle: "Make someone a winner using currency",
-    description: "This game starts a raffle by using a currency. Users with more currency will have a higher chance of winning.",
+    description: "This game starts a lottery by using a currency. Users with more currency will have a higher chance of winning.",
     icon: "fa-dice-three",
     settingCategories: {
         manualSettings: {
-            title: "Manual Raffle Settings",
+            title: "Manual Lottery Settings",
             sortRank: 1,
             settings: {
                 startDelay: {
                     type: "number",
                     title: "Start Delay (mins)",
-                    description: "The time users are given to enter the raffle.",
+                    description: "The time users are given to enter the lottery.",
                     placeholder: "Enter mins",
                     default: 2,
                     sortRank: 1,
@@ -29,10 +29,10 @@ module.exports = {
                 },
                 startMessage: {
                     type: "string",
-                    title: "Raffle Started",
-                    description: "Sent when the manual raffle has started.",
+                    title: "Lottery Started",
+                    description: "Sent when the manual lottery has started.",
                     useTextArea: true,
-                    default: "A raffle has begun! Type !enter to join the raffle.",
+                    default: "A lottery has begun! Type !enter to join the lottery.",
                     validation: {
                         required: true
                     }
@@ -45,7 +45,7 @@ module.exports = {
                             type: "string",
                             title: "On Join",
                             useTextArea: true,
-                            default: "{user} has joined the raffle!",
+                            default: "{user} has joined the lottery!",
                             tip: "Available variables: {user}",
                             sortRank: 1,
                             validation: {
@@ -56,7 +56,7 @@ module.exports = {
                             type: "string",
                             title: "Already Joined",
                             useTextArea: true,
-                            default: "{user}, you've already joined the raffle!",
+                            default: "{user}, you've already joined the lottery!",
                             tip: "Available variables: {user}",
                             sortRank: 2,
                             validation: {
@@ -68,13 +68,13 @@ module.exports = {
             }
         },
         currencySettings: {
-            title: "Currency Raffle Settings",
+            title: "Currency Lottery Settings",
             sortRank: 2,
             settings: {
                 currencyId: {
                     type: "currency-select",
                     title: "Currency",
-                    description: "Which currency to use for the raffle.",
+                    description: "Which currency to use for the lottery.",
                     sortRank: 1,
                     validation: {
                         required: true
@@ -83,7 +83,7 @@ module.exports = {
                 startDelay: {
                     type: "number",
                     title: "Start Delay (secs)",
-                    description: "The delay time until the raffle announces a winner.",
+                    description: "The delay time until the lottery announces a winner.",
                     placeholder: "Enter secs",
                     default: 10,
                     sortRank: 2,
@@ -93,10 +93,10 @@ module.exports = {
                 },
                 startMessage: {
                     type: "string",
-                    title: "Raffle Started",
-                    description: "Sent when the currency raffle has started.",
+                    title: "Lottery Started",
+                    description: "Sent when the currency lottery has started.",
                     useTextArea: true,
-                    default: "A raffle has begun!",
+                    default: "A lottery has begun!",
                     validation: {
                         required: true
                     }
@@ -115,13 +115,13 @@ module.exports = {
         }
     },
     onLoad: gameSettings => {
-        raffleCommand.registerRaffleCommand();
+        lotteryCommand.registerLotteryCommand();
     },
     onUnload: gameSettings => {
-        raffleCommand.unregisterRaffleCommand();
-        raffleCommand.clearCooldown();
+        lotteryCommand.unregisterLotteryCommand();
+        lotteryCommand.clearCooldown();
     },
     onSettingsUpdate: gameSettings => {
-        raffleCommand.clearCooldown();
+        lotteryCommand.clearCooldown();
     }
 };
