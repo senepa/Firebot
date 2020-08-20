@@ -34,6 +34,7 @@ let getGiveawayDb = () => profileManager.getJsonDbInProfile("/giveaways");
 
 /**
  * @typedef {Object} GiveawaySettings - all settings data saved for the giveaway
+ * @property {boolean} active - If the giveaway has been enabled by the user
  * @property {Object.<string, Object.<string, any>>} settings - Dictionary of dictionaries contained giveaway settings saved by the user
  */
 
@@ -63,7 +64,7 @@ let getGiveawayDb = () => profileManager.getJsonDbInProfile("/giveaways");
 let allGiveawaySettings = {};
 
 /**@type {FirebotGiveaway[]} */
-const registeredGiveaway = [];
+const registeredGiveaways = [];
 
 /**
  * Register a Firebot giveaway
@@ -73,7 +74,7 @@ const registeredGiveaway = [];
 function registerGiveaway(giveaway) {
     if (giveaway == null) return;
 
-    if (registeredGiveaway.some(g => g.id === giveaway.id)) return;
+    if (registeredGiveaways.some(g => g.id === giveaway.id)) return;
 
     giveaway.active = false;
 
@@ -88,7 +89,7 @@ function registerGiveaway(giveaway) {
         giveaway.onLoad(giveawaySettings);
     }
 
-    registeredGiveaway.push(giveaway);
+    registeredGiveaways.push(giveaway);
 }
 
 function buildGiveawaySettings(giveaway, savedSettings) {
