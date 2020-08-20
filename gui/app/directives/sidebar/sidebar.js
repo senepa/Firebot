@@ -1,6 +1,6 @@
 "use strict";
 
-(function() {
+(function () {
     angular.module("firebotApp").component("sidebar", {
         bindings: {},
         template: `
@@ -18,6 +18,7 @@
                         <nav-category name="{{'SIDEBAR.CHAT' | translate }}" pad-top="true"></nav-category>
                         <nav-link page="Commands" name="{{'SIDEBAR.CHAT.COMMANDS' | translate }}" icon="fa-exclamation"></nav-link>
                         <nav-link page="Games" name="Games" icon="fa-dice"></nav-link>
+                        <nav-link page="Giveaways" name="Giveaways" icon="fa-parachute-box"></nav-link>
                         <nav-link page="Chat Feed" name="{{'SIDEBAR.CHAT.CHAT_FEED' | translate }}" icon="fa-comment-alt-lines"></nav-link>
 
                         <nav-category name="{{'SIDEBAR.OTHER' | translate }}" pad-top="true"></nav-category>
@@ -98,7 +99,7 @@
                 </script>
             </div>
             `,
-        controller: function(
+        controller: function (
             sidebarManager,
             updatesService,
             connectionService,
@@ -119,7 +120,7 @@
 
             ctrl.isViewerDBOn = settingsService.getViewerDB;
 
-            ctrl.showConnectionPanelModal = function() {
+            ctrl.showConnectionPanelModal = function () {
                 utilityService.showModal({
                     component: "connectionPanelModal",
                     windowClass: "connection-panel-modal",
@@ -131,7 +132,7 @@
                 return updatesService.updateIsAvailable();
             };
 
-            ctrl.$onInit = function() {};
+            ctrl.$onInit = function () { };
         }
     });
 }());

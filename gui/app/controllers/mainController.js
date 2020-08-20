@@ -1,5 +1,5 @@
 "use strict";
-(function() {
+(function () {
     const electron = require("electron");
     const shell = electron.shell;
 
@@ -33,17 +33,17 @@
         'ngAria'
     ]);
 
-    app.factory("$exceptionHandler", function(logger) {
-    // this catches angular exceptions so we can send it to winston
-        return function(exception, cause) {
+    app.factory("$exceptionHandler", function (logger) {
+        // this catches angular exceptions so we can send it to winston
+        return function (exception, cause) {
             console.log(exception || "", cause || {});
             logger.error(exception || "", cause || {});
         };
     });
 
-    app.directive('focusOn', function() {
-        return function(scope, elem, attr) {
-            scope.$on('focusOn', function(e, name) {
+    app.directive('focusOn', function () {
+        return function (scope, elem, attr) {
+            scope.$on('focusOn', function (e, name) {
                 if (name === attr.focusOn) {
                     elem[0].focus();
                 }
@@ -52,7 +52,7 @@
     });
 
     app.factory('focus', function ($rootScope, $timeout) {
-        return function(name) {
+        return function (name) {
             $timeout(function () {
                 $rootScope.$broadcast('focusOn', name);
             });
@@ -61,7 +61,7 @@
 
     app.config([
         "$translateProvider",
-        function($translateProvider) {
+        function ($translateProvider) {
             $translateProvider
                 .useStaticFilesLoader({
                     prefix: "lang/locale-",
@@ -73,7 +73,7 @@
 
     app.config([
         "ngToastProvider",
-        function(ngToast) {
+        function (ngToast) {
             ngToast.configure({
                 verticalPosition: "top",
                 horizontalPosition: "center",
@@ -103,6 +103,7 @@
         settingsService,
         countersService,
         gamesService,
+        giveawayService,
         presetEffectListsService
     ) {
         // 'chatMessagesService' is included so its instantiated on app start
@@ -126,6 +127,8 @@
 
         gamesService.loadGames();
 
+        giveawaysService.loadGiveaways();
+
         presetEffectListsService.loadPresetEffectLists();
 
         //start notification check
@@ -146,7 +149,7 @@
         });
     });
 
-    app.controller("MainController", function($scope, $rootScope, $timeout, connectionService, utilityService,
+    app.controller("MainController", function ($scope, $rootScope, $timeout, connectionService, utilityService,
         settingsService, sidebarManager, logger, backendCommunicator) {
         $rootScope.showSpinner = true;
 
@@ -155,7 +158,7 @@
         /**
          * rootScope functions. This means they are accessable in all scopes in the front end
          */
-        $rootScope.pasteClipboard = function(elementId, shouldUnfocus) {
+        $rootScope.pasteClipboard = function (elementId, shouldUnfocus) {
             angular.element(`#${elementId}`).focus();
             document.execCommand("paste");
             if (shouldUnfocus === true || shouldUnfocus == null) {
@@ -163,7 +166,7 @@
             }
         };
 
-        $rootScope.copyTextToClipboard = function(text) {
+        $rootScope.copyTextToClipboard = function (text) {
             let textArea = document.createElement("textarea");
             // Place in top-left corner of screen regardless of scroll position.
             textArea.style.position = "fixed";
@@ -203,14 +206,14 @@
             document.body.removeChild(textArea);
         };
 
-        $rootScope.openLinkExternally = function(url) {
+        $rootScope.openLinkExternally = function (url) {
             shell.openExternal(url);
         };
 
         /*
         * MANAGE LOGINS MODAL
         */
-        $scope.showManageLoginsModal = function() {
+        $scope.showManageLoginsModal = function () {
             let showManageLoginsModal = {
                 templateUrl: "manageLoginsModal.html",
                 // This is the controller to be used for the modal.
@@ -218,19 +221,19 @@
                     $scope.cs = connectionService;
 
                     // Login Kickoff
-                    $scope.loginOrLogout = function(type) {
+                    $scope.loginOrLogout = function (type) {
                         connectionService.loginOrLogout(type);
                     };
 
                     $scope.getAccountAvatar = connectionService.getAccountAvatar;
 
                     // When the user clicks "Save", we want to pass the id back to interactiveController
-                    $scope.close = function() {
+                    $scope.close = function () {
                         $uibModalInstance.close();
                     };
 
                     // When they hit cancel or click outside the modal, we dont want to do anything
-                    $scope.dismiss = function() {
+                    $scope.dismiss = function () {
                         $uibModalInstance.dismiss("cancel");
                     };
                 }
@@ -241,7 +244,7 @@
         /*
         * New Profile MODAL
         */
-        $scope.showNewProfileModal = function() {
+        $scope.showNewProfileModal = function () {
             let showNewProfileModal = {
                 templateUrl: "newProfileModal.html",
                 size: 'sm',
@@ -249,7 +252,7 @@
                 controllerFunc: ($scope, $uibModalInstance, connectionService, ngToast) => {
 
                     // Login Kickoff
-                    $scope.createNewProfile = function() {
+                    $scope.createNewProfile = function () {
                         if ($scope.profileName == null || $scope.profileName === "") {
                             ngToast.create("Please provide a profile name.");
                             return;
@@ -259,7 +262,7 @@
                     };
 
                     // When they hit cancel or click outside the modal, we dont want to do anything
-                    $scope.dismiss = function() {
+                    $scope.dismiss = function () {
                         $uibModalInstance.dismiss("cancel");
                     };
                 }
@@ -270,7 +273,7 @@
         /*
         * Rename Profile MODAL
         */
-        $scope.showRenameProfileModal = function() {
+        $scope.showRenameProfileModal = function () {
             let renameProfileModal = {
                 templateUrl: "renameProfileModal.html",
                 size: 'sm',
@@ -283,7 +286,7 @@
                     $scope.profileName = currentProfileId;
 
                     // Login Kickoff
-                    $scope.renameProfile = function() {
+                    $scope.renameProfile = function () {
                         if ($scope.profileName == null || $scope.profileName === "") {
                             ngToast.create("Please provide a profile name.");
                             return;
@@ -293,7 +296,7 @@
                     };
 
                     // When they hit cancel or click outside the modal, we dont want to do anything
-                    $scope.dismiss = function() {
+                    $scope.dismiss = function () {
                         $uibModalInstance.dismiss("cancel");
                     };
                 }
@@ -306,20 +309,20 @@
         /*
         * Delete Profile MODAL
         */
-        $scope.showDeleteProfileModal = function() {
+        $scope.showDeleteProfileModal = function () {
             let deleteProfileModal = {
                 templateUrl: "deleteProfileModal.html",
                 size: 'sm',
                 // This is the controller to be used for the modal.
                 controllerFunc: ($scope, $uibModalInstance, connectionService) => {
                     // Delete Profile
-                    $scope.deleteProfile = function() {
+                    $scope.deleteProfile = function () {
                         $uibModalInstance.close();
                         connectionService.deleteProfile();
                     };
 
                     // When they hit cancel or click outside the modal, we dont want to do anything
-                    $scope.dismiss = function() {
+                    $scope.dismiss = function () {
                         $uibModalInstance.dismiss("cancel");
                     };
                 }
@@ -328,7 +331,7 @@
         };
 
         // Switch Profiles
-        $scope.switchProfiles = function(profileId) {
+        $scope.switchProfiles = function (profileId) {
             if (profileId !== $scope.currentProfileId) {
                 utilityService
                     .showConfirmationModal({
@@ -373,12 +376,12 @@
         $scope.customFontCssPath = profileManager.getPathInProfile("/fonts/fonts.css");
 
         //make sure sliders render properly
-        $timeout(function() {
+        $timeout(function () {
             $scope.$broadcast("rzSliderForceRender");
         }, 250);
 
         // Apply Theme
-        $scope.appTheme = function() {
+        $scope.appTheme = function () {
             return settingsService.getTheme();
         };
 
@@ -401,8 +404,8 @@
     });
 
     // This adds a filter that we can use for ng-repeat, useful when we want to paginate something
-    app.filter("startFrom", function() {
-        return function(input, startFrom) {
+    app.filter("startFrom", function () {
+        return function (input, startFrom) {
             if (!input) return input;
             startFrom = +startFrom;
             return input.slice(startFrom);
@@ -410,8 +413,8 @@
     });
 
     // This adds a filter that we can use for searching command triggers
-    app.filter("triggerSearch", function() {
-        return function(commands, query) {
+    app.filter("triggerSearch", function () {
+        return function (commands, query) {
             if (commands == null || query == null) return commands;
             return commands.filter(c =>
                 c.trigger.toLowerCase().includes(query.toLowerCase())
@@ -420,8 +423,8 @@
     });
 
 
-    app.filter("sortTagSearch", function() {
-        return function(elements, tag) {
+    app.filter("sortTagSearch", function () {
+        return function (elements, tag) {
             if (elements == null || tag == null) return elements;
             return elements.filter(e =>
                 e.sortTags != null && e.sortTags.some(t => t === tag.id)
@@ -431,8 +434,8 @@
 
 
     // This adds a filter that we can use for searching varaibles
-    app.filter("variableSearch", function() {
-        return function(variables, query) {
+    app.filter("variableSearch", function () {
+        return function (variables, query) {
             if (variables == null || query == null) return variables;
             let normalizedQuery = query.replace("$", "").toLowerCase();
             return variables
@@ -443,8 +446,8 @@
     });
 
     // This adds a filter that we can use for searching varaibles
-    app.filter("effectCategoryFilter", function() {
-        return function(effects, category) {
+    app.filter("effectCategoryFilter", function () {
+        return function (effects, category) {
             if (effects == null || category == null) return effects;
             return effects
                 .filter(v =>
@@ -453,20 +456,20 @@
         };
     });
 
-    app.filter('capitalize', function() {
-        return function(input) {
+    app.filter('capitalize', function () {
+        return function (input) {
             return (input) ? input.charAt(0).toUpperCase() + input.substr(1).toLowerCase() : '';
         };
     });
 
-    app.filter('prettyDate', function() {
-        return function(input) {
+    app.filter('prettyDate', function () {
+        return function (input) {
             return (input) ? moment(input).format('L') : 'Not saved';
         };
     });
 
-    app.filter('commify', function() {
-        return function(input) {
+    app.filter('commify', function () {
+        return function (input) {
             return input ? input.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") : "";
         };
     });
