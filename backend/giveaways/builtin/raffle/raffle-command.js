@@ -265,11 +265,11 @@ const raffleEnterCommand = {
         // Ensure the raffle has been started and the lobby ready
         if (raffleRunner.lobbyOpen) {
 
-
+            const userBalance = await currencyDatabase.getUserCurrencyAmount(username, currencyId);
 
             raffleRunner.addUser({
                 username: username,
-                tickets: 
+                tickets: userBalance
             });
 
         }
