@@ -95,6 +95,13 @@ exports.whenReady = async () => {
     const builtinGameLoader = require("../../../games/builtin-game-loader");
     builtinGameLoader.loadGames();
 
+    const giveawaysManager = require("../../../giveaways/giveaway-manager");
+    giveawaysManager.loadGiveawaySettings();
+
+    const builtinGiveawayLoader = require("../../../giveaways/builtin-giveaway-loader");
+    builtinGiveawayLoader.loadGiveaways();
+
+
     // get importer in memory
     const v4Importer = require("../../../import/v4/v4-importer");
     v4Importer.setupListeners();

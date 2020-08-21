@@ -78,7 +78,8 @@ function registerGiveaway(giveaway) {
 
     giveaway.active = false;
 
-    let giveaway = allGiveawaysSettings[giveaway.id];
+    let giveawaySettings = allGiveawaysSettings[giveaway.id];
+
     if (giveaway) {
         giveaway.active = giveawaySettings.active;
     } else {
