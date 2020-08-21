@@ -4,7 +4,7 @@
 const util = require("../../../utility");
 const twitchChat = require("../../../chat/twitch-chat");
 const commandManager = require("../../../chat/commands/CommandManager");
-const gameManager = require("../../game-manager");
+const giveawayManager = require("../../giveaway-manager");
 const currencyDatabase = require("../../../database/currencyDatabase");
 const customRolesManager = require("../../../roles/custom-roles-manager");
 const twitchRolesManager = require("../../../../shared/twitch-roles");
@@ -161,7 +161,7 @@ const lotteryCommand = {
     onTriggerEvent: async event => {
         const { chatEvent, userCommand } = event;
 
-        const lotterySettings = gameManager.getGameSettings("firebot-lottery");
+        const lotterySettings = giveawayManager.getGiveawaySettings("firebot-lottery");
         const chatter = lotterySettings.settings.chatSettings.chatter;
 
         const currencyId = lotterySettings.settings.currencySettings.currencyId;
@@ -255,7 +255,7 @@ const lotteryEnterCommand = {
 
         const { chatEvent, userCommand } = event;
 
-        const bidSettings = gameManager.getGameSettings("firebot-lottery");
+        const bidSettings = giveawayManager.getGiveawaySettings("firebot-lottery");
 
         const chatter = bidSettings.settings.chatSettings.chatter;
 
@@ -281,7 +281,7 @@ const lotteryClaimCommand = {
 
         const { chatEvent, userCommand } = event;
 
-        const bidSettings = gameManager.getGameSettings("firebot-lottery");
+        const bidSettings = giveawayManager.getGiveawaySettings("firebot-lottery");
 
         const chatter = bidSettings.settings.chatSettings.chatter;
 
