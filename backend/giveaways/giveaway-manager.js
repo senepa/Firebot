@@ -61,7 +61,7 @@ let getGiveawayDb = () => profileManager.getJsonDbInProfile("/giveaways");
 /**
  * @type {Object.<string, GiveawaySettings>}
  */
-let allGiveawaySettings = {};
+let allGiveawaysSettings = {};
 
 /**@type {FirebotGiveaway[]} */
 const registeredGiveaways = [];
@@ -78,7 +78,7 @@ function registerGiveaway(giveaway) {
 
     giveaway.active = false;
 
-    let giveaway = allGiveawaySettings[giveaway.id];
+    let giveaway = allGiveawaysSettings[giveaway.id];
     if (giveaway) {
         giveaway.active = giveawaySettings.active;
     } else {
