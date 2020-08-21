@@ -7,8 +7,8 @@ const lotteryCommand = require("./lottery-command");
  */
 module.exports = {
     id: "firebot-lottery",
-    name: "Lottery",
-    subtitle: "Start a giveaway for chat users",
+    name: "Chat Raffle",
+    subtitle: "Start a giveaway for current chat users",
     description: "This starts a raffle for users in chat. Everyone has the same chance of winning",
     icon: "fa-users",
     settingCategories: {
