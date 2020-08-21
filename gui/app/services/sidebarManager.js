@@ -142,7 +142,7 @@
                     controller: "gamesController"
                 })
 
-                .when("/geivaways", {
+                .when("/giveaways", {
                     templateUrl: "./templates/_giveaways.html",
                     controller: "giveawaysController"
                 });;
