@@ -36,7 +36,7 @@
             <div class="modal-footer sticky-footer edit-giveaway-footer">
                 <button ng-show="$ctrl.giveaway != null" type="button" class="btn btn-danger pull-left" ng-click="$ctrl.resetToDefaults()">Reset to default</button>
                 <button type="button" class="btn btn-link" ng-click="$ctrl.dismiss()">Cancel</button>
-                <button ng-show="$ctrl.giveaway != null" type="button" class="btn btn-primary" ng-click="$ctrl.save()">Save</button>
+                <button ng-show="$ctrl.giveaway != null" type="button" class="btn btn-primary" ng-click="$ctrl.run()">Run</button>
             </div>
             <scroll-sentinel element-class="edit-giveaway-footer"></scroll-sentinel>
             `,
@@ -125,7 +125,7 @@
                 return true;
             }
 
-            $ctrl.save = () => {
+            $ctrl.run = () => {
                 if (!validate()) return;
                 $ctrl.close({
                     $value: {

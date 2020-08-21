@@ -10,71 +10,16 @@ module.exports = {
     name: "Raffle",
     subtitle: "Make someone a winner using currency",
     description: "This giveaway starts a raffle by using a currency. Users with more currency will have a higher chance of winning.",
-    icon: "fa-dice-three",
+    icon: "fa-money-bill-wave",
     settingCategories: {
-        manualSettings: {
-            title: "Manual Raffle Settings",
-            sortRank: 1,
-            settings: {
-                startDelay: {
-                    type: "number",
-                    title: "Start Delay (mins)",
-                    description: "The time users are given to enter the raffle.",
-                    placeholder: "Enter mins",
-                    default: 2,
-                    sortRank: 1,
-                    validation: {
-                        min: 1
-                    }
-                },
-                startMessage: {
-                    type: "string",
-                    title: "Raffle Started",
-                    description: "Sent when the manual raffle has started.",
-                    useTextArea: true,
-                    default: "A raffle has begun! Type !enter to join the raffle.",
-                    validation: {
-                        required: true
-                    }
-                },
-                entryMessages: {
-                    title: "Entry Messages",
-                    sortRank: 2,
-                    settings: {
-                        onJoin: {
-                            type: "string",
-                            title: "On Join",
-                            useTextArea: true,
-                            default: "{user} has joined the raffle!",
-                            tip: "Available variables: {user}",
-                            sortRank: 1,
-                            validation: {
-                                required: true
-                            }
-                        },
-                        alreadyJoined: {
-                            type: "string",
-                            title: "Already Joined",
-                            useTextArea: true,
-                            default: "{user}, you've already joined the raffle!",
-                            tip: "Available variables: {user}",
-                            sortRank: 2,
-                            validation: {
-                                required: true
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        currencySettings: {
+        generalSettings: {
             title: "Currency Raffle Settings",
             sortRank: 2,
             settings: {
                 requireEntry: {
                     type: "boolean",
-                    title: "Require Entry",
-                    description: "Which currency to use for the raffle.",
+                    title: "Require Currency",
+                    description: "Select if users are required to have currency to enter the raffle.",
                     sortRank: 1,
                     validation: {
                         required: true
@@ -86,7 +31,7 @@ module.exports = {
                     description: "Which currency to use for the raffle.",
                     sortRank: 1,
                     validation: {
-                        required: true
+                        required: false
                     }
                 },
                 startDelay: {

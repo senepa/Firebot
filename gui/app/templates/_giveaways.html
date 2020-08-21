@@ -1,6 +1,5 @@
 <div style="margin-top:20px;display:flex;flex-wrap: wrap;">
-    <div ng-repeat="giveaway in giveawaysService.giveaways track by giveaway.id" class="fb-tile orange centered" ng-class="{'inactive': !giveaway.active}" style="margin-right: 10px;flex: 0 0 auto;width:250px;height:150px;">
-        <div class="edit-btn" ng-click="openEditGiveawaySettingsModal(giveaway)"></div>
+    <div ng-repeat="giveaway in giveawaysService.giveaways track by giveaway.id" ng-click="openEditGiveawaySettingsModal(giveaway)" class="fb-tile orange centered" style="margin-right: 10px;flex: 0 0 auto;width:250px;height:150px;">
         <div class="content">
             <div class="subtitle" style="font-size: 45px;">
                 <i class="fad" ng-class="giveaway.icon" aria-hidden="true"></i>

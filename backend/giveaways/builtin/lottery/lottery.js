@@ -8,14 +8,32 @@ const lotteryCommand = require("./lottery-command");
 module.exports = {
     id: "firebot-lottery",
     name: "Lottery",
-    subtitle: "Make someone a winner using currency",
-    description: "This game starts a lottery by using a currency. Users with more currency will have a higher chance of winning.",
-    icon: "fa-dice-three",
+    subtitle: "Start a giveaway for chat users",
+    description: "This starts a raffle for users in chat. Everyone has the same chance of winning",
+    icon: "fa-users",
     settingCategories: {
-        manualSettings: {
+        generalSettings: {
             title: "Manual Lottery Settings",
             sortRank: 1,
             settings: {
+                requireEntry: {
+                    type: "boolean",
+                    title: "Require Currency",
+                    description: "Select if users are required to have currency to enter the raffle.",
+                    sortRank: 1,
+                    validation: {
+                        required: true
+                    }
+                },
+                currencyId: {
+                    type: "currency-select",
+                    title: "Currency",
+                    description: "Which currency to use for the raffle.",
+                    sortRank: 1,
+                    validation: {
+                        required: false
+                    }
+                },
                 startDelay: {
                     type: "number",
                     title: "Start Delay (mins)",
@@ -30,9 +48,9 @@ module.exports = {
                 startMessage: {
                     type: "string",
                     title: "Lottery Started",
-                    description: "Sent when the manual lottery has started.",
+                    description: "Sent when the raffle has started.",
                     useTextArea: true,
-                    default: "A lottery has begun! Type !enter to join the lottery.",
+                    default: "A raffle has begun! Type !enter to join the lottery.",
                     validation: {
                         required: true
                     }
@@ -63,42 +81,6 @@ module.exports = {
                                 required: true
                             }
                         }
-                    }
-                }
-            }
-        },
-        currencySettings: {
-            title: "Currency Lottery Settings",
-            sortRank: 2,
-            settings: {
-                currencyId: {
-                    type: "currency-select",
-                    title: "Currency",
-                    description: "Which currency to use for the lottery.",
-                    sortRank: 1,
-                    validation: {
-                        required: true
-                    }
-                },
-                startDelay: {
-                    type: "number",
-                    title: "Start Delay (secs)",
-                    description: "The delay time until the lottery announces a winner.",
-                    placeholder: "Enter secs",
-                    default: 10,
-                    sortRank: 2,
-                    validation: {
-                        min: 1
-                    }
-                },
-                startMessage: {
-                    type: "string",
-                    title: "Lottery Started",
-                    description: "Sent when the currency lottery has started.",
-                    useTextArea: true,
-                    default: "A lottery has begun!",
-                    validation: {
-                        required: true
                     }
                 }
             }
