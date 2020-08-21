@@ -252,7 +252,9 @@ const raffleEnterCommand = {
 
         const { chatEvent, userCommand } = event;
 
-        const bidSettings = giveawayManager.getGiveawaySettings("firebot-raffle");
+        const username = userCommand.commandSender;
+
+        const raffleSettings = giveawayManager.getGiveawaySettings("firebot-raffle");
 
         const chatter = bidSettings.settings.chatSettings.chatter;
 
