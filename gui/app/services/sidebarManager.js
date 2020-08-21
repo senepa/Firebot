@@ -1,14 +1,14 @@
 "use strict";
 
-(function() {
+(function () {
     angular
         .module("firebotApp")
-        .factory("sidebarManager", function($timeout, $rootScope) {
+        .factory("sidebarManager", function ($timeout, $rootScope) {
             let service = {};
 
             service.navExpanded = true;
 
-            service.toggleNav = function() {
+            service.toggleNav = function () {
                 service.navExpanded = !service.navExpanded;
                 $rootScope.$broadcast("navToggled");
             };
@@ -16,22 +16,22 @@
             service.currentTab = "commands";
             service.currentTabName = "Commands";
 
-            service.setTab = function(tabId, name) {
+            service.setTab = function (tabId, name) {
                 service.currentTab = tabId.toLowerCase();
 
                 service.currentTabName = name ? name : tabId;
 
                 //hack that somewhat helps with the autoupdate slider styling issues on first load
-                $timeout(function() {
+                $timeout(function () {
                     $rootScope.$broadcast("rzSliderForceRender");
                 }, 50);
             };
 
-            service.tabIsSelected = function(tabId) {
+            service.tabIsSelected = function (tabId) {
                 return service.currentTab.toLowerCase() === tabId.toLowerCase();
             };
 
-            service.currentTabIsFullScreen = function() {
+            service.currentTabIsFullScreen = function () {
                 return (
                     service.currentTab.toLowerCase() === "chat feed" ||
                     service.currentTab.toLowerCase() === "commands" ||
@@ -42,7 +42,7 @@
                 );
             };
 
-            service.currentTabShouldntScroll = function() {
+            service.currentTabShouldntScroll = function () {
                 return (
                     service.currentTab.toLowerCase() === "chat feed" ||
                     service.currentTab.toLowerCase() === "buttons" ||
@@ -59,7 +59,7 @@
     angular.module("firebotApp").config([
         "$routeProvider",
         "$locationProvider",
-        function($routeProvider) {
+        function ($routeProvider) {
             $routeProvider
 
                 .when("/viewer-roles", {
@@ -140,7 +140,12 @@
                 .when("/games", {
                     templateUrl: "./templates/_games.html",
                     controller: "gamesController"
-                });
+                })
+
+                .when("/geivaways", {
+                    templateUrl: "./templates/_giveaways.html",
+                    controller: "giveawaysController"
+                });;
         }
     ]);
 }(window.angular));
