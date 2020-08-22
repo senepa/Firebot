@@ -3,13 +3,13 @@
 const bidCommand = require("./bid-command");
 
 /**
- * @type {import('../../giveaway-manager').FirebotGiveaway}
+ * @type {import('../../game-manager').FirebotGame}
  */
 module.exports = {
     id: "firebot-bid",
-    name: "Auction",
-    subtitle: "Put something up for bidding",
-    description: "This allows the Streamer (or mods) to start an auction for something which users can then place bids for. Useful as a giveaway tool that uses channel currency! Once bidding has started, users can type '!bid [bidAmount]' in chat. When a user is outbid they get their currency back. The winner will lose whatever currency they bid.",
+    name: "Bid",
+    subtitle: "Put something up for auction",
+    description: "This allows the Streamer (or mods) to start an auction for something which users can then place bids for. Useful as a game tool that uses channel currency! Once bidding has started, users can type '!bid [bidAmount]' in chat. When a user is outbid they get their currency back. The winner will lose whatever currency they bid.",
     icon: "fa-gavel",
     settingCategories: {
         currencySettings: {

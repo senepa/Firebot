@@ -8,8 +8,8 @@ const raffleCommand = require("./raffle-command");
 module.exports = {
     id: "firebot-raffle",
     name: "Raffle",
-    subtitle: "Start a raffle for all users with a currency",
-    description: "This giveaway starts a raffle by using a currency. Users with more currency will have a higher chance of winning.",
+    subtitle: "A raffle for all users",
+    description: "Start a raffle.",
     icon: "fa-money-bill-wave",
     settingCategories: {
         generalSettings: {
