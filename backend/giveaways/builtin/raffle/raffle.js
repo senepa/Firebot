@@ -8,19 +8,28 @@ const raffleCommand = require("./raffle-command");
 module.exports = {
     id: "firebot-raffle",
     name: "Raffle",
-    subtitle: "A raffle for all users",
+    subtitle: "Start a raffle",
     description: "Start a raffle.",
-    icon: "fa-money-bill-wave",
+    icon: "fa-ticket-alt",
     settingCategories: {
         generalSettings: {
             title: "Currency Raffle Settings",
-            sortRank: 2,
+            sortRank: 1,
             settings: {
+                requireEntry: {
+                    type: "string",
+                    title: "Item",
+                    description: "Describe what is being given away.",
+                    sortRank: 1,
+                    validation: {
+                        required: true
+                    }
+                },
                 requireEntry: {
                     type: "boolean",
                     title: "Require Currency",
-                    description: "Select if users are required to have currency to enter the raffle.",
-                    sortRank: 1,
+                    description: "Check this box if users need currency to enter the raffle.",
+                    sortRank: 2,
                     validation: {
                         required: true
                     }
@@ -29,9 +38,29 @@ module.exports = {
                     type: "currency-select",
                     title: "Currency",
                     description: "Which currency to use for the raffle.",
-                    sortRank: 1,
+                    sortRank: 3,
                     validation: {
                         required: false
+                    }
+                },
+                manualEntry: {
+                    type: "boolean",
+                    title: "Require Manual Entry",
+                    description: "Check this box if users are required to type !enter in chat to participate in the raffle.",
+                    sortRank: 4,
+                    validation: {
+                        min: 1
+                    }
+                },
+                lobbyTime: {
+                    type: "number",
+                    title: "Entry Window (mins)",
+                    description: "This is how long users will be given to participate in the raffle by using the !enter command.",
+                    placeholder: "Enter mins",
+                    default: 2,
+                    sortRank: 5,
+                    validation: {
+                        min: 1
                     }
                 },
                 startDelay: {
@@ -40,7 +69,7 @@ module.exports = {
                     description: "The delay time until the raffle announces a winner.",
                     placeholder: "Enter secs",
                     default: 10,
-                    sortRank: 2,
+                    sortRank: 6,
                     validation: {
                         min: 1
                     }
@@ -48,9 +77,10 @@ module.exports = {
                 startMessage: {
                     type: "string",
                     title: "Raffle Started",
-                    description: "Sent when the currency raffle has started.",
+                    description: "Sent when the raffle has started.",
                     useTextArea: true,
                     default: "A raffle has begun!",
+                    sortRank: 7,
                     validation: {
                         required: true
                     }
@@ -59,7 +89,7 @@ module.exports = {
         },
         chatSettings: {
             title: "Chat Settings",
-            sortRank: 3,
+            sortRank: 2,
             settings: {
                 chatter: {
                     type: "chatter-select",
