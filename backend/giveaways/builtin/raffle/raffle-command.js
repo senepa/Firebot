@@ -21,7 +21,6 @@ let raffleTimer;
 const cooldownCache = new NodeCache({ checkperiod: 5 });
 
 const RAFFLE_COMMAND_ID = "firebot:raffle";
-const ENTER_COMMAND_ID = "firebot:raffleEnter";
 const CLAIM_COMMAND_ID = "firebot:raffleClaim";
 
 function purgeCaches() {
