@@ -58,13 +58,13 @@ function adjustCurrency(user, currencyId, value, adjustType = "adjust") {
         let newUserValue = value;
 
         switch (adjustType) {
-            case "set":
-                logger.debug("Currency: Setting " + user.username + " currency " + currencyId + " to: " + value + ".");
-                newUserValue = value;
-                break;
-            default:
-                logger.debug("Currency: Adjusting " + value + " currency to " + user.username + ". " + currencyId);
-                newUserValue = (user.currency[currencyId] += parseInt(value));
+        case "set":
+            logger.debug("Currency: Setting " + user.username + " currency " + currencyId + " to: " + value + ".");
+            newUserValue = value;
+            break;
+        default:
+            logger.debug("Currency: Adjusting " + value + " currency to " + user.username + ". " + currencyId);
+            newUserValue = (user.currency[currencyId] += parseInt(value));
         }
 
         let db = userDatabase.getUserDb();

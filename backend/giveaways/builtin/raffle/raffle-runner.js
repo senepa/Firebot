@@ -28,40 +28,9 @@ async function runRaffle() {
     // wait a few secs for suspense
     await util.wait(7 * 1000);
 
-    const randomIndex = util.getRandomInt(0, messages.length - 1);
-    let outcomeMessage = messages[randomIndex];
-
-    if (usersInHeist.length === 1) {
-        outcomeMessage = outcomeMessage
-            .replace("{user}", usersInHeist[0].username);
-    }
-
-    const currencyId = raffleSettings.settings.currencySettings.currencyId;
-    for (const user of survivers) {
-        await currencyDatabase.adjustCurrencyForUser(user.username, currencyId, user.winnings);
-    }
-
-    let winningsString;
-    if (percentSurvived > 0) {
-        winningsString = survivers
-            .map(s => `${s.username} (${util.commafy(s.winnings)})`)
-            .join(", ");
-    } else {
-        winningsString = "None";
-    }
-
-    const winningsMessage = raffleSettings.settings.generalMessages.heistWinnings
-        .replace("{winnings}", winningsString);
-
-    try {
-        twitchChat.sendChatMessage(outcomeMessage, null, chatter);
-        twitchChat.sendChatMessage(winningsMessage, null, chatter);
-    } catch (error) {
-        //weird error
-    }
 
     // We've completed the heist, lets clean up!
-    usersInHeist = [];
+    usersInRaffle = [];
 }
 
 exports.triggerLobbyStart = (startDelayMins) => {
@@ -76,7 +45,7 @@ exports.triggerLobbyStart = (startDelayMins) => {
         exports.lobbyOpen = false;
         startDelayTimeoutId = null;
 
-        const raffleSettings- = giveawayManager.getGiveawaySettings("firebot-raffle");
+        const raffleSettings = giveawayManager.getGiveawaySettings("firebot-raffle");
         const currencyId = raffleSettings.settings.currencySettings.currencyId;
         const chatter = raffleSettings.settings.chatSettings.chatter;
 
@@ -107,16 +76,11 @@ exports.userInRaffle = (username) => {
 };
 
 exports.clearCooldowns = () => {
-    if (cooldownTimeoutId != null) {
-        clearTimeout(cooldownTimeoutId);
-        cooldownTimeoutId = null;
-    }
-    exports.cooldownExpireTime = null;
 
     if (startDelayTimeoutId != null) {
         clearTimeout(startDelayTimeoutId);
         startDelayTimeoutId = null;
     }
     exports.lobbyOpen = false;
-    usersInHeist = [];
+    usersInRaffle = [];
 };
