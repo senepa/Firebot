@@ -16,11 +16,20 @@ module.exports = {
             title: "Currency Settings",
             sortRank: 1,
             settings: {
+                item: {
+                    type: "string",
+                    title: "Item",
+                    description: "What is up for auction.",
+                    sortRank: 1,
+                    validation: {
+                        required: true
+                    }
+                },
                 currencyId: {
                     type: "currency-select",
                     title: "Currency",
                     description: "Which currency to use for bidding.",
-                    sortRank: 1,
+                    sortRank: 2,
                     validation: {
                         required: true
                     }
@@ -32,7 +41,7 @@ module.exports = {
                     description: "The minimum amount for the opening bid.",
                     tip: "Optional.",
                     default: 1,
-                    sortRank: 2,
+                    sortRank: 3,
                     validation: {
                         min: 1
                     }

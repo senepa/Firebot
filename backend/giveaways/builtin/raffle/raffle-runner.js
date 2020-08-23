@@ -17,19 +17,21 @@ let usersInRaffle = [];
 
 let startDelayTimeoutId = null;
 exports.lobbyOpen = false;
+exports.raffleRunning = false;
 
 async function runRaffle() {
+
     const raffleSettings = giveawayManager.getGiveawaySettings("firebot-raffle");
     const chatter = raffleSettings.settings.chatSettings.chatter;
+    const currencyId = raffleSettings.settings.currencySettings.currencyId;
 
-    const startMessage = raffleSettings.settings.manualSettings.startMessage;
+    const currency = currencyDatabase.getCurrencyById(currencyId);
+    const currencyName = currency.name;
+
+    const startMessage = raffleSettings.settings.manualSettings.startMessage
+        .replace("{item}", currencyName);
     twitchChat.sendChatMessage(startMessage, null, chatter);
 
-    // wait a few secs for suspense
-    await util.wait(7 * 1000);
-
-
-    // We've completed the heist, lets clean up!
     usersInRaffle = [];
 }
 
@@ -44,14 +46,6 @@ exports.triggerLobbyStart = (startDelayMins) => {
     startDelayTimeoutId = setTimeout(async () => {
         exports.lobbyOpen = false;
         startDelayTimeoutId = null;
-
-        const raffleSettings = giveawayManager.getGiveawaySettings("firebot-raffle");
-        const currencyId = raffleSettings.settings.currencySettings.currencyId;
-        const chatter = raffleSettings.settings.chatSettings.chatter;
-
-
-
-        twitchChat.sendChatMessage(teamTooSmallMessage, null, chatter);
 
         usersInRaffle = [];
         return;

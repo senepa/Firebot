@@ -13,7 +13,7 @@ module.exports = {
     icon: "fa-ticket-alt",
     settingCategories: {
         generalSettings: {
-            title: "Currency Raffle Settings",
+            title: "General Raffle Settings",
             sortRank: 1,
             settings: {
                 requireEntry: {
@@ -25,29 +25,11 @@ module.exports = {
                         required: true
                     }
                 },
-                requireEntry: {
-                    type: "boolean",
-                    title: "Require Currency",
-                    description: "Check this box if users need currency to enter the raffle.",
-                    sortRank: 2,
-                    validation: {
-                        required: true
-                    }
-                },
-                currencyId: {
-                    type: "currency-select",
-                    title: "Currency",
-                    description: "Which currency to use for the raffle.",
-                    sortRank: 3,
-                    validation: {
-                        required: false
-                    }
-                },
                 manualEntry: {
                     type: "boolean",
                     title: "Require Manual Entry",
                     description: "Check this box if users are required to type !enter in chat to participate in the raffle.",
-                    sortRank: 4,
+                    sortRank: 2,
                     validation: {
                         min: 1
                     }
@@ -58,7 +40,7 @@ module.exports = {
                     description: "This is how long users will be given to participate in the raffle by using the !enter command.",
                     placeholder: "Enter mins",
                     default: 2,
-                    sortRank: 5,
+                    sortRank: 3,
                     validation: {
                         min: 1
                     }
@@ -69,20 +51,33 @@ module.exports = {
                     description: "The delay time until the raffle announces a winner.",
                     placeholder: "Enter secs",
                     default: 10,
-                    sortRank: 6,
+                    sortRank: 4,
                     validation: {
                         min: 1
                     }
-                },
-                startMessage: {
-                    type: "string",
-                    title: "Raffle Started",
-                    description: "Sent when the raffle has started.",
-                    useTextArea: true,
-                    default: "A raffle has begun!",
-                    sortRank: 7,
+                }
+            }
+        },
+        currencySettings: {
+            title: "Currency Raffle Settings",
+            sortRank: 1,
+            settings: {
+                requireCurrency: {
+                    type: "boolean",
+                    title: "Require Currency",
+                    description: "Check this box if users need currency to enter the raffle.",
+                    sortRank: 1,
                     validation: {
                         required: true
+                    }
+                },
+                currencyId: {
+                    type: "currency-select",
+                    title: "Currency",
+                    description: "Which currency to use for the raffle.",
+                    sortRank: 2,
+                    validation: {
+                        required: false
                     }
                 }
             }
@@ -93,7 +88,20 @@ module.exports = {
             settings: {
                 chatter: {
                     type: "chatter-select",
-                    title: "Chat As"
+                    title: "Chat As",
+                    sortRank: 1,
+                },
+                startMessage: {
+                    type: "string",
+                    title: "A raffle has started for a",
+                    description: "Sent when the raffle has started.",
+                    tip: "Available variables: {item}",
+                    useTextArea: true,
+                    default: "A raffle has begun!",
+                    sortRank: 2,
+                    validation: {
+                        required: true
+                    }
                 }
             }
         }
