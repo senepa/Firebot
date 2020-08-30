@@ -48,11 +48,11 @@ exports.triggerLobbyStart = (startDelayMins) => {
         startDelayTimeoutId = null;
 
         usersInRaffle = [];
-        return;
-
-        runRaffle();
 
     }, startDelayMins * 60000);
+
+    runRaffle();
+
 };
 
 /**
