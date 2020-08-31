@@ -28,11 +28,14 @@ async function runRaffle() {
     const currency = currencyDatabase.getCurrencyById(currencyId);
     const currencyName = currency.name;
 
+    usersInRaffle = [];
+
     const startMessage = raffleSettings.settings.manualSettings.startMessage
         .replace("{item}", currencyName);
     twitchChat.sendChatMessage(startMessage, null, chatter);
 
-    usersInRaffle = [];
+    
+
 }
 
 exports.triggerLobbyStart = (startDelayMins) => {

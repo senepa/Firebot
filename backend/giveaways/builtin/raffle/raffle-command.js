@@ -22,6 +22,7 @@ let raffleTimer;
 
 let activeRaffleInfo = {
     "active": false,
+    "claimed": false,
     "winner": ""
 };
 
@@ -65,9 +66,7 @@ const raffleEnterCommand = {
         const bidAmount = parseInt(triggeredArg);
 
         if (raffleRunner.lobbyOpen) {
-
             if (requireCurrency) {
-
                 // make sure the currency still exists
                 if (currency == null) {
                     twitchChat.sendChatMessage("Unable to enter the raffle as the selected currency appears to not exist anymore.", null, chatter);
@@ -75,7 +74,7 @@ const raffleEnterCommand = {
                 }
 
                 if (isNaN(bidAmount)) {
-                    twitchChat.sendChatMessage(`Invalid amount. Please enter a number to start bidding.`, username, chatter);
+                    twitchChat.sendChatMessage(`Invalid amount. Please enter a number to enter the raffle.`, username, chatter);
                     twitchChat.deleteMessage(chatEvent.id);
                     return;
                 }
@@ -87,12 +86,12 @@ const raffleEnterCommand = {
                     tickets: userBalance
                 });
 
+            } else {
+                raffleRunner.addUser({
+                    username: chatter,
+                    tickets: null
+                });
             }
-
-            raffleRunner.addUser({
-                username: chatter,
-                tickets: null
-            });
         }
     }
 };

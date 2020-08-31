@@ -18,7 +18,7 @@ const { indexOf } = require("angular-route");
                     closeCallback: resp => {
                         const action = resp.action;
 
-                        if (action === 'save') {
+                        if (action === 'run') {
                             const updatedGame = resp.game;
                             if (updatedGame == null) return;
                             gamesService.saveGame(updatedGame);
