@@ -16,7 +16,7 @@ module.exports = {
             title: "General Raffle Settings",
             sortRank: 1,
             settings: {
-                requireEntry: {
+                item: {
                     type: "string",
                     title: "Item",
                     description: "Describe what is being given away.",

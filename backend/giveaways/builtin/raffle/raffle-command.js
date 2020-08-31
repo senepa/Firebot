@@ -30,12 +30,19 @@ function purgeCaches() {
     cooldownCache.flushAll();
     activeRaffleInfo = {
         "active": false,
+        "claimed": false,
         "winner": ""
     };
 }
 
 function stopRaffle(chatter) {
+
+    const raffleSettings = giveawayManager.getGiveawaySettings("firebot-raffle");
+    const requireCurrency = raffleSettings.settings.generalSettings.requireCurrency;
+
     clearTimeout(raffleTimer);
+
+
     twitchChat.sendChatMessage(`${activeRaffleInfo.winner} has won the raffle, type !claim to claim your prize!`, null, chatter);
     purgeCaches();
 }
@@ -73,7 +80,7 @@ const raffleEnterCommand = {
                     twitchChat.deleteMessage(chatEvent.id);
                 }
 
-                if (isNaN(bidAmount)) {
+                if (isNaN(bidAmount) || bidAmount <= 0) {
                     twitchChat.sendChatMessage(`Invalid amount. Please enter a number to enter the raffle.`, username, chatter);
                     twitchChat.deleteMessage(chatEvent.id);
                     return;
@@ -111,13 +118,16 @@ const raffleClaimCommand = {
 
         const { chatEvent, userCommand } = event;
 
-        const bidSettings = giveawayManager.getGiveawaySettings("firebot-raffle");
+        const username = userCommand.commandSender;
 
-        const chatter = bidSettings.settings.chatSettings.chatter;
+        const raffleSettings = giveawayManager.getGiveawaySettings("firebot-raffle");
+        const chatter = raffleSettings.settings.chatSettings.chatter;
+        const item = raffleSettings.settings.generalSettings.item;
 
-        const currencyId = bidSettings.settings.currencySettings.currencyId;
-        const currency = currencyDatabase.getCurrencyById(currencyId);
-        const currencyName = currency.name;
+        if (username === activeRaffleInfo.winner) {
+            twitchChat.sendChatMessage(`Congratulations ${username}! You have won ${item}!`, null, chatter);
+            activeRaffleInfo.claimed = true;
+        }
 
     }
 };
